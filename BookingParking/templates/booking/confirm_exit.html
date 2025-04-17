@@ -1,0 +1,23 @@
+{% extends "booking/base.html" %}
+{% block title %}Подтверждение выезда</div>
+{% endblock %}
+{% block content %}
+<div class="auth-card position-relative">
+<a href="{% url 'booking:home' %}" class="back-arrow-glass" title="На главную"><span>←</span></a>
+<h2>Вы хотите покинуть парковку?</h2>
+
+<p>
+  Парковка: {{ booking.parkingzone.name }}<br>
+  Период: {{ booking.start_datetime|date:"d.m.Y H:i" }} – {{ booking.end_datetime|date:"d.m.Y H:i" }}<br>
+  Статус: {{ booking.get_status_display }}
+</p>
+
+<form method="post" action="{% url 'booking:leave_parking' booking.id %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Подтвердить выезд</button>
+</form>
+
+<p class="mt-3"><a href="{% url 'booking:profile' %}">Назад в профиль</a></p>
+
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "booking/base.html" %}
+{% load time_filters %}
+{% block title %}Оплата штрафа{% endblock %}
+{% block content %}
+<div class="auth-card position-relative">
+<a href="{% url 'booking:home' %}" class="back-arrow-glass" title="На главную"><span>←</span></a>
+
+<h2>Оплата штрафа</h2>
+<p>Парковка: {{ booking.parkingzone.name }}</p>
+<p>Период бронирования: {{ booking.start_datetime }} – {{ booking.end_datetime }}</p>
+<p>Начисленный штраф: {{ penalty }} руб.</p>
+<p>После оплаты бронь будет продлена на: {{ extension|duration_pretty }}.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-warning">Оплатить штраф</button>
+</form>
+</div>
+{% endblock %}

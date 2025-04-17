@@ -1,0 +1,228 @@
+{% extends "booking/base.html" %}
+{% load tz %}
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Профиль пользователя</h2>
+
+<a href="{% url 'booking:home' %}" class="btn btn-outline-primary mb-4">← Вернуться на главную</a>
+
+<div class="btn-group d-flex mb-4" role="group">
+  <button class="btn btn-info w-100" onclick="showSection('current')">Бронирования</button>
+  <button class="btn btn-info w-100" onclick="showSection('history')">История</button>
+  <button class="btn btn-info w-100" onclick="showSection('fines')">Штрафы</button>
+  <button class="btn btn-info w-100" onclick="showSection('settings')">Настройки</button>
+  <button class="btn btn-secondary w-100" disabled>...</button>
+</div>
+
+<section id="section-current" style="display: block;">
+  <h4>Текущие бронирования</h4>
+  {% if active_bookings %}
+    <div class="container">
+      {% for booking in active_bookings %}
+        <div class="card mb-3">
+          <div class="card-body" data-booking-id="{{ booking.id }}">
+            <h5 class="card-title">{{ booking.parkingzone.name }}</h5>
+            <p class="card-text">
+                <div id="map-{{ booking.id }}" style="width: 100%; height: 250px;" class="mt-3 rounded"></div>
+              <strong>Период:</strong>
+              {{ booking.start_datetime|localtime|date:"d.m.Y H:i" }} – 
+              {{ booking.end_datetime|localtime|date:"d.m.Y H:i" }}<br>
+              <strong>Статус:</strong> {{ booking.get_status_display }}
+            </p>
+            <div class="action-container">
+              {% if booking.status == 'active' and now >= booking.start_datetime %}
+                <a href="{% url 'booking:open_barrier' booking.id %}" class="btn btn-success">Открыть шлагбаум</a>
+              {% elif booking.status == 'inside' %}
+                <a href="{% url 'booking:confirm_exit' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
+              {% elif booking.status == 'overdue' %}
+                {% if booking.penalty > 0 %}
+                  <a href="{% url 'booking:pay_penalty' booking.id %}" class="btn btn-warning">Оплатить штраф ({{ booking.penalty|floatformat:2 }} руб.)</a>
+                {% else %}
+                  <a href="{% url 'booking:leave_parking' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">Ожидается действие</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Нет активных бронирований.</p>
+  {% endif %}
+</section>
+
+<section id="section-history" style="display: none;">
+  <h4>История бронирований</h4>
+  {% if finished_bookings %}
+      <div class="row mb-3">
+  <div class="col-md-4 mb-2">
+    <input type="text" id="searchInput" class="form-control" placeholder="Поиск по парковке...">
+  </div>
+  <div class="col-md-4 mb-2">
+    <select id="fineFilter" class="form-select">
+      <option value="">Все бронирования</option>
+      <option value="fine">Только со штрафом</option>
+      <option value="no-fine">Только без штрафа</option>
+    </select>
+  </div>
+  <div class="col-md-4 mb-2">
+    <input type="date" id="dateFilter" class="form-control" placeholder="Дата бронирования">
+  </div>
+</div>
+
+    <div class="scroll-box">
+      <ul class="list-group mb-0">
+{% for booking in finished_bookings %}
+  <li class="list-group-item"
+    data-parking="{{ booking.parkingzone.name|lower }}"
+    data-hasfine="{% if booking.total_fine_amount > 0 %}yes{% else %}no{% endif %}"
+    data-date="{{ booking.start_datetime|date:"Y-m-d" }}">
+    <strong>{{ booking.parkingzone.name }}</strong><br>
+    {{ booking.start_datetime|date:"d.m.Y H:i" }} – {{ booking.end_datetime|date:"d.m.Y H:i" }}<br>
+    Статус: {{ booking.get_status_display }}<br>
+
+    <strong>Цена брони:</strong> {{ booking.price|floatformat:0 }} руб.<br>
+    {% with fine_total=booking.total_fine_amount %}
+      {% if fine_total > 0 %}
+        <span style="color:red;"><strong>Штраф:</strong> {{ fine_total|floatformat:0 }} руб.</span><br>
+      {% else %}
+        <span style="color:green;">Штраф: нет</span><br>
+      {% endif %}
+      <strong>Итого:</strong> {{ booking.total_cost|floatformat:0 }} руб.
+    {% endwith %}
+  </li>
+{% endfor %}
+      </ul>
+    <p id="no-results" class="text-center mt-3" style="display:none; color: white;">Ничего не найдено.</p>
+
+    </div>
+  {% else %}
+    <p>История отсутствует.</p>
+  {% endif %}
+</section>
+
+<section id="section-fines" style="display: none;">
+  <h4>Начисленные штрафы</h4>
+
+  {% if fines %}
+    <p><strong>Общая сумма штрафов:</strong> {{ total_fines|floatformat:2 }} руб.</p>
+
+    <div class="scroll-box">
+      <ul class="list-group mb-0">
+        {% for fine in fines %}
+          <li class="list-group-item">
+            <strong>{{ fine.booking.parkingzone.name }}</strong><br>
+            Дата: {{ fine.issued_at|date:"d.m.Y H:i" }}<br>
+            Сумма: {{ fine.amount|floatformat:2 }} руб.<br>
+            Причина: {{ fine.reason }}<br>
+            {% if fine.is_paid %}
+              <span style="color:green">Оплачен</span>
+            {% else %}
+              <span style="color:red">Не оплачен</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <p>Штрафов пока нет.</p>
+  {% endif %}
+</section>
+
+<section id="section-settings" style="display: none;">
+<div class="glass personal-info-box mb-4">
+  <h3 class="mb-3">Личные данные</h3>
+  <p><strong>Email:</strong> {{ user.email }}</p>
+  <p><strong>Госномер:</strong> {{ user.car_number }}</p>
+  <p><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y H:i" }}</p>
+  <p><strong>Последний вход:</strong> {{ user.last_login|date:"d.m.Y H:i" }}</p>
+</div>
+  <form method="post" action="{% url 'booking:update_car_number' %}" class="mb-3">
+    {% csrf_token %}
+    <div class="input-group">
+      <input type="text" name="new_car_number" placeholder="Новый госномер" class="form-control" required>
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-outline-success">Сменить госномер</button>
+      </div>
+    </div>
+  </form>
+
+  <a href="{% url 'booking:password_reset' %}" class="btn btn-outline-primary btn-sm mb-2 w-100">Сбросить пароль</a>
+  <a href="{% url 'booking:logout' %}" class="btn btn-outline-danger btn-sm w-100">Выйти из аккаунта</a>
+</section>
+
+<script>
+  function showSection(id) {
+    const sections = ['current', 'history', 'fines', 'settings'];
+    sections.forEach(name => {
+      document.getElementById('section-' + name).style.display = (name === id) ? 'block' : 'none';
+    });
+  }
+</script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ YANDEX_API_KEY }}"></script>
+<script>
+  ymaps.ready(function () {
+    {% for booking in active_bookings %}
+      ymaps.geocode("{{ booking.parkingzone.address }}").then(function (res) {
+        const first = res.geoObjects.get(0);
+        if (!first) return;
+
+        const coords = first.geometry.getCoordinates();
+        const map = new ymaps.Map("map-{{ booking.id }}", {
+          center: coords,
+          zoom: 16,
+          controls: ['zoomControl']
+        });
+
+        const placemark = new ymaps.Placemark(coords, {
+          balloonContent: "{{ booking.parkingzone.name }}"
+        });
+
+        map.geoObjects.add(placemark);
+      });
+    {% endfor %}
+  });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.getElementById("searchInput");
+  const fineFilter = document.getElementById("fineFilter");
+  const dateFilter = document.getElementById("dateFilter");
+  const items = document.querySelectorAll("#section-history .list-group-item");
+  const noResults = document.getElementById("no-results");
+
+  function filterItems() {
+    const search = searchInput.value.toLowerCase().trim();
+    const fine = fineFilter.value;
+    const selectedDate = dateFilter.value;
+
+    let visibleCount = 0;
+
+    items.forEach(item => {
+      const parking = item.dataset.parking || "";
+      const hasFine = item.dataset.hasfine || "";
+      const bookingDate = item.dataset.date || "";
+
+      let show = true;
+
+      if (search && !parking.includes(search)) show = false;
+      if (fine === "fine" && hasFine !== "yes") show = false;
+      if (fine === "no-fine" && hasFine !== "no") show = false;
+      if (selectedDate && bookingDate !== selectedDate) show = false;
+
+      item.style.display = show ? "block" : "none";
+      if (show) visibleCount++;
+    });
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  }
+
+  searchInput.addEventListener("input", filterItems);
+  fineFilter.addEventListener("change", filterItems);
+  dateFilter.addEventListener("change", filterItems);
+});
+</script>
+{% endblock %}

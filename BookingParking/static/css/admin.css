@@ -1,0 +1,29 @@
+body {
+    background-color: #f0faff;
+}
+
+#header {
+    background-color: #40e0d0;
+}
+
+#header h1, #user-tools {
+    color: white;
+}
+
+.module h2 {
+    background-color: #32c6b3;
+    color: white;
+    padding: 10px;
+}
+
+.button, .grp-button, .submit-row input {
+    background-color: #40e0d0;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.button:hover, .grp-button:hover, .submit-row input:hover {
+    background-color: #32c6b3;
+}

@@ -1,0 +1,39 @@
+{% extends "booking/base.html" %}
+{% block body_class %}with-grid{% endblock %}
+{% block title %}Доступные парковки{% endblock %}
+{% block content %}
+
+    {% load static %}
+    <div class="container">
+    <h2 class="mb-4">Список парковочных зон</h2>
+    <div class="row">
+    {% for parking in parkings %}
+        <div class="col-md-4 mb-4">
+    <div class="card h-100 parking-card" style="background-color: #f7fbff; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+               {% if parking.photo %}
+  <img src="{{ parking.photo.url }}"
+       onerror="this.onerror=null; this.src='{% static 'images/default.jpg' %}';"
+        class="img-fluid" style=" height: auto;" alt="Фото парковки">
+{% else %}
+  <img src="{% static 'images/default.jpg' %}" class="img-fluid" alt="Фото парковки">
+{% endif %}
+    <div class="card-body">
+                    <h5 class="card-title">{{ parking.name }}</h5>
+                    <p class="card-text">
+        <strong>Адрес:</strong> {{ parking.address }}<br>
+                <p>Мест: {{ parking.total_places }} | Тариф: {{ parking.tariff_per_hour }} руб/час</p>
+
+            </p>
+                </div>
+        <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'booking:parking_detail' parking.id %}" class="btn btn-info btn-block">Выбрать парковку</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <li>На данный момент нет доступных парковок.</li>
+        {% endfor %}
+    </ul>
+     </div>
+    </div>
+{% endblock %}

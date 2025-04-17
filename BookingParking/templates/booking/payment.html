@@ -1,0 +1,21 @@
+{% extends "booking/base.html" %}
+{% block title %}Оплата бронирования</div>
+{% endblock %}
+{% block content %}
+<div class="auth-card position-relative">
+<a href="{% url 'booking:home' %}" class="back-arrow-glass" title="На главную"><span>←</span></a>
+
+<div class="success-card">
+  <h2>Оплата бронирования</h2>
+  <p><strong>Парковка:</strong> {{ booking.parkingzone.name }}</p>
+  <p><strong>Период:</strong> {{ booking.start_datetime }} — {{ booking.end_datetime }}</p>
+  <p><strong>Стоимость:</strong> {{ cost|floatformat:2 }} руб.</p>
+  <p>Оплата условная. Нажмите "Оплатить", чтобы продолжить и получить чек на почту.</p>
+
+  <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-info">Оплатить</button>
+  </form>
+</div>
+</div>
+{% endblock %}

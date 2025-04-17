@@ -1,0 +1,8 @@
+#id_latitude,
+#id_longitude {
+    display: none !important;
+}
+.form-row.field-latitude,
+.form-row.field-longitude {
+    display: none !important;
+}

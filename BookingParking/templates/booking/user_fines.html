@@ -1,0 +1,27 @@
+{% extends "booking/base.html" %}
+{% block title %}Мои штрафы{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Начисленные штрафы</h2>
+
+{% if fines %}
+  <ul class="list-group">
+    {% for booking in fines %}
+      <li class="list-group-item">
+        <strong>{{ booking.parkingzone.name }}</strong><br>
+        Период: {{ booking.start_datetime|date:"d.m.Y H:i" }} — {{ booking.end_datetime|date:"d.m.Y H:i" }}<br>
+        Статус: {{ booking.get_status_display }}<br>
+        Цена брони: {{ booking.price|floatformat:2 }} руб.<br>
+        Штраф: <span class="text-danger">{{ booking.penalty|floatformat:2 }} руб.</span><br>
+                {% with total=booking.penalty|add:booking.price %}
+          <strong>Итого:</strong> {{ total|floatformat:2 }} руб.
+        {% endwith %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-muted">У вас нет начисленных штрафов.</p>
+{% endif %}
+
+<a href="{% url 'booking:profile' %}" class="btn btn-outline-primary mt-4">Назад в профиль</a>
+{% endblock %}

@@ -1,0 +1,709 @@
+/* static/css/style.css */
+.fallback-gradient {
+    background: linear-gradient(135deg, #012836, #004c5f);
+    animation: gradientShift 15s ease infinite;
+    background-size: 400% 400%;
+}
+.animate-fade {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-fade.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+@keyframes gradientShift {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+}
+.glass.personal-info-box {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-size: 1rem;
+}
+header {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+body {
+    background: linear-gradient(135deg, #012836, #004c5f);
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline; /* опционально: подчёркивание при наведении */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#vanta-bg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.content {
+  flex: 1;
+}
+main.content {
+    flex: 1;
+}
+
+footer {
+    flex-shrink: 0;
+}
+
+.techno-card {
+    background: linear-gradient(135deg, #ffffff, #e8f0f5);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    color: #002f42;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.techno-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.techno-card h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.techno-card ul {
+    padding-left: 1.5rem;
+    list-style: none;
+}
+
+.techno-card li::before {
+    content: "✔";
+    margin-right: 0.6rem;
+    color: #0099cc;
+    font-weight: bold;
+}
+
+.techno-card li {
+    margin-bottom: 0.6rem;
+    font-size: 1.1rem;
+}
+
+.techno-btn {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.btn-main {
+    background-color: #00bcd4;
+    border: none;
+    color: white;
+}
+
+.btn-main:hover {
+    background-color: #00acc1;
+}
+
+.btn-outline {
+    border: 2px solid #00bcd4;
+    background: transparent;
+    color: #00bcd4;
+}
+
+.btn-outline:hover {
+    background: #00bcd4;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .techno-card {
+        padding: 1.5rem 1rem;
+    }
+    .techno-btn {
+        width: 100%;
+        display: block;
+        margin-bottom: 1rem;
+    }
+}
+.back-arrow {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 1.5rem;
+  text-decoration: none;
+  color: #007bff;
+  background-color: white;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.back-arrow:hover {
+  background-color: #e6e6e6;
+}
+
+
+header, footer {
+    font-family: 'Montserrat', sans-serif;
+}
+body {
+    background: linear-gradient(150deg, #33b8bd, #1573a5);
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    background: linear-gradient(to right, #00c6ff, #0072ff) !important;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+footer {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+.content {
+    padding: 20px;
+}
+
+header p a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Кнопки */
+button, .btn {
+    background-color: #40e0d0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1em;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover, .btn:hover {
+    background-color: #32c6b3;
+}
+
+
+.auth-card {
+    max-width: 420px;
+    margin: 4rem auto;
+    background: linear-gradient(135deg, #ffffff, #e9f6fb);
+    padding: 2rem 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    color: #003c52;
+}
+
+.auth-card h2 {
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.auth-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.auth-card input {
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+.auth-card button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    background-color: #00bcd4;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.auth-card button:hover {
+    background-color: #0097a7;
+}
+
+.auth-card p {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+
+
+body {
+    background: linear-gradient(135deg, #073954, #157ca5);
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(to right, #00c6ff, #0072ff) !important;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert {
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to right, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+    color: white;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    animation: fadeInDrop 0.4s ease-out;
+}
+
+@keyframes fadeInDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+footer {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+}
+
+.auth-card p {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+}
+
+.auth-card label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+.card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+.parking-image-wrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  background-color: #edf9fd;
+}
+
+.parking-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .parking-image-wrapper {
+    aspect-ratio: 4 / 3;
+  }
+}
+.parking-card {
+    background: linear-gradient(135deg, #ffffff, #edf9fd);
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+.parking-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+.parking-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+.parking-card .card-body {
+    padding: 1rem 1.2rem;
+    color: #002f42;
+}
+.parking-card .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.parking-card .card-text {
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+.parking-card .btn {
+    background-color: #00bcd4;
+    border: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+.parking-card .btn:hover {
+    background-color: #00a6bb;
+}
+
+.success-card {
+    max-width: 600px;
+    margin: 3rem auto;
+    background: linear-gradient(135deg, #ffffff, #e7fafd);
+    padding: 2rem 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+    color: #004c5f;
+    text-align: center;
+}
+
+.success-card h2, .success-card h3 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.success-card p {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.success-card .btn {
+    margin: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.profile-tabs .btn {
+    background-color: #40e0d0;
+    color: white;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.profile-tabs .btn:hover {
+    background-color: #32c6b3;
+}
+
+.profile-tabs .btn.active {
+    background-color: #00acc1;
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+    transform: translateY(2px);
+}
+
+.profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .profile-tabs {
+        flex-direction: column;
+    }
+    .profile-tabs .btn {
+        width: 100%;
+        border-radius: 8px;
+    }
+}
+
+.profile-section {
+    background: transparent;
+    padding: 1rem 0;
+}
+
+a {
+    color: #008080;
+}
+a:hover {
+    color: #005757;
+}
+
+/* Таблицы */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #40e0d0;
+    color: white;
+}
+.btn-outline-light {
+    color: #40e0d0;
+    border-color: #40e0d0;
+}
+.btn-outline-light:hover {
+    background-color: #40e0d0;
+    color: #fff;
+}
+/* Для экранов меньше 600px */
+@media only screen and (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+    header h1 {
+        font-size: 1.5em;
+    }
+    .content {
+        padding: 10px;
+    }
+}
+.auth-card {
+  position: relative;
+}
+.btn-outline-light {
+    color: #fff !important;
+    border-color: #fff !important;
+}
+.btn-outline-light:hover {
+    background-color: #fff !important;
+    color: #40e0d0 !important;
+}
+header .btn-outline-light {
+    border-color: white;
+    color: white;
+    font-weight: bold;
+}
+
+header .btn-outline-light:hover {
+    background-color: white;
+    color: #40e0d0;
+}
+
+@media only screen and (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    header h1 {
+        font-size: 1.4em;
+        margin-bottom: 10px;
+    }
+
+    header .btn,
+    header .btn-outline-light,
+    header a {
+        font-size: 0.9em;
+        padding: 6px 12px;
+        margin: 3px 0;
+    }
+
+    .content {
+        padding: 15px;
+    }
+
+    .offcanvas {
+        width: 100%;
+    }
+
+    .offcanvas-body {
+        font-size: 15px;
+    }
+}
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 1.2em;
+    }
+
+    header span {
+        font-size: 0.9em;
+        word-break: break-word;
+    }
+
+    .content {
+        padding: 10px;
+    }
+
+    .btn, .btn-outline-light {
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+
+    .offcanvas {
+        width: 100%;
+    }
+
+    .offcanvas-body {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+  .btn-group.d-flex {
+    flex-direction: column;
+  }
+
+  .btn-group.d-flex .btn {
+    margin-bottom: 10px;
+  }
+}
+
+body.with-grid {
+  background-color: #0b1c2c;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+  color: white;
+}
+.parking-form,
+.parking-form label,
+.parking-form .form-control {
+  color: #000 !important;
+}
+.scroll-box {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+}
+
+/* Стилизация скролла */
+.scroll-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-box::-webkit-scrollbar-thumb {
+  background-color: #00acc1;
+  border-radius: 4px;
+}
+
+.scroll-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .scroll-box {
+    max-height: 300px;
+  }
+}
+.scroll-box {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+@media (max-width: 576px) {
+  #section-history .row .form-control,
+  #section-history .row .form-select {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  #section-history .row {
+    display: flex;
+    flex-direction: column;
+  }
+}

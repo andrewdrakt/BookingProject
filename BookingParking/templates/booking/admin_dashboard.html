@@ -1,0 +1,24 @@
+{% extends "booking/base.html" %}
+{% block title %}Панель администратора{% endblock %}
+{% block content %}
+<h2>Панель администратора</h2>
+<p><a href="{% url 'booking:add_parking' %}">Добавить новую парковку</a></p>
+<table border="1">
+    <tr>
+        <th>Название</th>
+        <th>Адрес</th>
+        <th>Мест</th>
+        <th>Тариф</th>
+        <th>Доступна</th>
+    </tr>
+    {% for parking in parkings %}
+    <tr>
+        <td>{{ parking.name }}</td>
+        <td>{{ parking.address }}</td>
+        <td>{{ parking.total_places }}</td>
+        <td>{{ parking.tariff_per_hour }}</td>
+        <td>{{ parking.is_available|yesno:"Да,Нет" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

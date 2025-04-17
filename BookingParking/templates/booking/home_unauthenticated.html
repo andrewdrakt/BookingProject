@@ -1,0 +1,28 @@
+{% extends "booking/base.html" %}
+{% block body_class %}with-vanta{% endblock %}
+{% load static %}
+{% block title %}PARKING | Добро пожаловать{% endblock %}
+{% block content %}
+<div class="techno-card animate-fade">
+    <h2>О сервисе</h2>
+    <p>Наш сервис позволяет удобно бронировать парковочные места. Для начала работы необходимо зарегистрироваться.</p>
+    <ul>
+        <li>Удобно бронировать место заранее</li>
+        <li>Возможность выбрать удобное время</li>
+        <li>Автономность</li>
+    </ul>
+</div>
+
+<div class="techno-card">
+    <h2>Как это работает?</h2>
+    <ul>
+        <li>Ищите удобную парковку</li>
+        <li>Бронируйте</li>
+        <li>Паркуйтесь</li>
+    </ul>
+    <div class="mt-4 d-flex flex-wrap">
+        <a href="{% url 'booking:register' %}" class="techno-btn btn-main">Зарегистрироваться</a>
+        <a href="{% url 'booking:login' %}" class="techno-btn btn-outline">Войти</a>
+    </div>
+</div>
+{% endblock %}

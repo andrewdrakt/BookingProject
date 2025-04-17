@@ -1,0 +1,9 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Админ-панель{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/admin.css' %}">
+{% endblock %}

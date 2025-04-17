@@ -1,0 +1,16 @@
+{% extends 'booking/base.html' %}
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+<a href="{% url 'booking:home' %}" class="back-arrow" title="На главную">←</a>
+  <h2>Вход</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="w-100">Войти</button>
+  </form>
+  <p>Нет аккаунта? <a href="{% url 'booking:register' %}">Зарегистрируйтесь</a></p>
+
+</div>
+{% endblock %}
