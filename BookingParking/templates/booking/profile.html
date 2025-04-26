@@ -36,9 +36,10 @@
               {% elif booking.status == 'inside' %}
                 <a href="{% url 'booking:confirm_exit' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
               {% elif booking.status == 'overdue' %}
-                {% if booking.penalty > 0 %}
-                  <a href="{% url 'booking:pay_penalty' booking.id %}" class="btn btn-warning">Оплатить штраф ({{ booking.penalty|floatformat:2 }} руб.)</a>
-                {% else %}
+                {% if booking.has_unpaid_fines %}
+                    <a href="{% url 'booking:pay_penalty' booking.id %}" class="btn btn-warning">Оплатить штраф ({{ booking.total_fine_amount|floatformat:2 }} руб.)
+                    </a>
+                {% endif %}
                   <a href="{% url 'booking:leave_parking' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
                 {% endif %}
               {% else %}

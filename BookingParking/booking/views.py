@@ -107,47 +107,49 @@ def calculate_extension(booking):
     else:
         hours = int((overdue_minutes + 59) // 60)
         return timedelta(hours=hours)
+
+
 @login_required
 def pay_penalty(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
     if booking.status != 'overdue':
         messages.error(request, "Штраф не требуется для данной брони.")
         return redirect('booking:profile')
+    if not booking.has_unpaid_fines():
+        messages.info(request, "У вас нет неоплаченных штрафов для этой брони.")
+        return redirect('booking:profile')
+    penalty_amount = booking.total_fine_amount()
 
-    penalty_amount = booking.penalty
-
-    now = timezone.now()
-    overdue_seconds = (now - booking.end_datetime).total_seconds()
-    if overdue_seconds <= 10 * 60:
-        extension_text = "10 минут"
-    elif overdue_seconds <= 40 * 60:
-        extension_text = "30 минут"
-    else:
-        extension_text = "за каждый час просрочки начисляется дополнительный штраф"
+    if penalty_amount <= 0:
+        messages.info(request, "У вас нет неоплаченных штрафов для этой брони.")
+        return redirect('booking:profile')
 
     if request.method == 'POST':
-        if booking.penalty > 0 and not booking.fines.exists():
-            Fine.objects.create(
-                booking=booking,
-                amount=booking.penalty,
-                reason="Просрочка оплачена пользователем",
-                is_paid=True
-            )
+        # Оплачиваем все неоплаченные штрафы
+        unpaid_fines = booking.fines.filter(is_paid=False)
+        for fine in unpaid_fines:
+            fine.is_paid = True
+            fine.save()
 
-        extension = calculate_extension_duration(booking)
         booking.penalty = 0
         booking.status = 'inside'
+
+        extension = calculate_extension_duration(booking)
         booking.end_datetime += extension
         booking.save()
+
         user = request.user
         user.is_blocked = False
         user.save()
+
         local_end = timezone.localtime(booking.end_datetime)
         formatted_end = local_end.strftime("%d.%m.%Y %H:%M")
+
         receipt_text = (
-            f"Оплата штрафа за просрочку.\n"
+            f"Оплата штрафов за просрочку.\n"
             f"Парковка: {booking.parkingzone.name}\n"
-            f"Сумма штрафа: {penalty_amount} руб.\n"
+            f"Сумма штрафов: {penalty_amount:.2f} руб.\n"
             f"Новая дата окончания брони: {formatted_end}\n"
             f"Код бронирования: {booking.reservation_code}\n"
         )
@@ -160,8 +162,9 @@ def pay_penalty(request, booking_id):
             fail_silently=False,
         )
 
-        messages.success(request, "Штраф оплачен. Бронь продлена на 10 минут. Теперь вы можете выехать с парковки.")
+        messages.success(request, "Штрафы успешно оплачены. Бронь продлена.")
         return redirect('booking:profile')
+
     extension = calculate_extension_duration(booking)
     return render(request, 'booking/pay_penalty.html', {
         'booking': booking,

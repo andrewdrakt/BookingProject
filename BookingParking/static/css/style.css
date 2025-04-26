@@ -1,4 +1,15 @@
 /* static/css/style.css */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(150deg, #33b8bd, #1573a5);
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+    font-family: 'Montserrat', sans-serif;
+    color: #ffffff;
+}
 .fallback-gradient {
     background: linear-gradient(135deg, #012836, #004c5f);
     animation: gradientShift 15s ease infinite;
@@ -9,6 +20,53 @@
     transform: translateY(20px);
     transition: opacity 0.6s ease, transform 0.6s ease;
 }
+
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: transparent;
+
+}
+
+main.content {
+  flex: 1 0 auto;
+}
+
+footer {
+    margin-top: auto;
+  flex-shrink: 0;
+}
+
+body.unauth-bg {
+    background-color: #33b8bd;
+    color: #ffffff;
+
+}
+
+body.unauth-bg .page-wrapper {
+    background: url('/static/images/unauth_bg.png') no-repeat center center fixed;
+    background-size: cover;
+
+}
+/*body.unauth-bg .page-wrapper {*/
+/*  position: relative;*/
+/*  overflow: hidden; !* чтобы псевдо-элемент не вылезал *!*/
+
+/*}*/
+
+/*body.unauth-bg .page-wrapper::before {*/
+/*  content: "";*/
+/*  position: fixed;      !* <-- для «залипания» фонового слоя *!*/
+/*  top: 0; left: 0;*/
+/*  width: 100vw;*/
+/*  height: 100vh;*/
+/*  background: url('/static/images/unauth_bg.png') center/cover no-repeat;*/
+/*  filter: blur(8px);    !* легкое размытие *!*/
+/*  transform: scale(1.05); !* чтобы края не появлялись при размытии *!*/
+/*  z-index: -1;          !* позади всего контента *!*/
+/*}*/
 
 .animate-fade.visible {
     opacity: 1;
@@ -42,13 +100,6 @@ header {
     z-index: 999;
 }
 
-body {
-    background: linear-gradient(135deg, #012836, #004c5f);
-    color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
-    margin: 0;
-    padding: 0;
-}
 
 .container {
     max-width: 900px;
@@ -60,30 +111,16 @@ a {
 }
 
 a:hover {
-  text-decoration: underline; /* опционально: подчёркивание при наведении */
+  text-decoration: underline;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-#vanta-bg {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+main.content {
+  flex: 1;
 }
 .content {
   flex: 1;
 }
-main.content {
-    flex: 1;
-}
 
-footer {
-    flex-shrink: 0;
-}
 
 .techno-card {
     background: linear-gradient(135deg, #ffffff, #e8f0f5);
@@ -194,13 +231,7 @@ footer {
 header, footer {
     font-family: 'Montserrat', sans-serif;
 }
-body {
-    background: linear-gradient(150deg, #33b8bd, #1573a5);
-    color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
-    margin: 0;
-    padding: 0;
-}
+
 
 .container {
     max-width: 900px;
@@ -303,13 +334,6 @@ button:hover, .btn:hover {
 
 
 
-body {
-    background: linear-gradient(135deg, #073954, #157ca5);
-    color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
-    margin: 0;
-    padding: 0;
-}
 
 header {
     background: linear-gradient(to right, #00c6ff, #0072ff) !important;
@@ -344,9 +368,7 @@ header {
   }
 }
 
-footer {
-    background: linear-gradient(to right, #00c6ff, #0072ff);
-}
+
 
 .auth-card p {
     display: flex;
@@ -537,7 +559,7 @@ th {
     background-color: #40e0d0;
     color: #fff;
 }
-/* Для экранов меньше 600px */
+
 @media only screen and (max-width: 600px) {
     body {
         font-size: 14px;
@@ -647,13 +669,7 @@ header .btn-outline-light:hover {
   }
 }
 
-body.with-grid {
-  background-color: #0b1c2c;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-attachment: fixed;
-  color: white;
-}
+
 .parking-form,
 .parking-form label,
 .parking-form .form-control {

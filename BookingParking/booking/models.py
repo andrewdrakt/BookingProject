@@ -76,7 +76,8 @@ class Booking(models.Model):
         return self.fines.aggregate(Sum('amount'))['amount__sum'] or 0
     def total_cost(self):
         return float(self.price) + float(self.total_fine_amount())
-
+    def has_unpaid_fines(self):
+        return self.fines.filter(is_paid=False).exists()
 class Fine(models.Model):
     booking = models.ForeignKey('Booking', on_delete=models.CASCADE, related_name='fines')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
