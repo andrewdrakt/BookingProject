@@ -2,11 +2,9 @@
 #include <Servo.h>        
 #include <ArduinoJson.h>
 #include <ESP8266WebServer.h>
+#include "nonpublic.h"
 
-// const char* ssid = "Velnet1617";
-// const char* password = "map111617ok";
-const char* ssid = "Barrier";
-const char* password = "poiuytre";
+
 #define RED_PIN    D5
 #define GREEN_PIN  D6
 #define BLUE_PIN   D2
@@ -116,7 +114,7 @@ void setup() {
   myservo.attach(13, 544, 2400);
   Serial.print("Подключение к WiFi");
   myservo.write(0);
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -148,21 +146,15 @@ void loop() {
   }
 }
 
-
-
-
-
-
+// // To check connection, comment code above and uncomment below
 // #include "ESP8266WiFi.h"
 
 // // WiFi parameters to be configured
-// const char* ssid = "Barrier";
-// const char* password = "poiuytre";
 
 // void setup(void)
 // {
 //   Serial.begin(9600);
-//   WiFi.begin(ssid, password);
+//   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
 //   // while wifi not connected yet, print '.'
 //   // then after it connected, get out of the loop

@@ -9,7 +9,9 @@ document.addEventListener("DOMContentLoaded", function () {
     addressInput.parentElement.appendChild(mapContainer);
 
     const script = document.createElement("script");
-    script.src = "https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=5e50de3d-ee8e-4918-a10f-106a707e6fac";
+    const keyElement = document.getElementById("yandex-key");
+    const apiKey = keyElement ? keyElement.dataset.key : "";
+    script.src = `https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=${apiKey}`;
     script.onload = initMap;
     document.body.appendChild(script);
 

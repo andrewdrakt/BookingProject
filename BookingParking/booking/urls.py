@@ -45,5 +45,11 @@ urlpatterns = [
              template_name='booking/password_reset_complete.html'),
          name='password_reset_complete'),
     path('metrics/', views.metrics_view, name='metrics'),
-
+    path('profile/add-parking/', views.add_parking_zone, name='add_parking_zone'),
+    path('profile/verify-account/', views.verify_account, name='verify_account'),
+    path('profile/my-parking/', views.my_parking_zones, name='my_parking_zones'),
+    path('profile/my-parking/<int:pk>/hide/', views.hide_parking_zone, name='hide_parking_zone'),
+    path('profile/my-parking/<int:pk>/edit/', views.edit_parking_zone, name='edit_parking_zone'),
+    path('profile/my-parking/<int:pk>/show/', views.show_parking_zone, name='show_parking_zone'),
+    path('check-availability/<int:parking_id>/', views.check_availability, name='check_availability'),
 ]

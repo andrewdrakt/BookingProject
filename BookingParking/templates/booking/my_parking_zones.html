@@ -1,0 +1,31 @@
+{% extends 'booking/base.html' %}
+{% block title %}Мои парковки{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Мои парковки</h2>
+  {% if zones %}
+    <ul class="list-group">
+      {% for parking in zones %}
+        <li class="list-group-item">
+          <strong>{{ parking.name }}</strong><br>
+          Адрес: {{ parking.address }}<br>
+          Мест: {{ parking.total_places }}<br>
+          Тариф: {{ parking.tariff_per_hour }} руб/час<br>
+
+          {% if parking.is_visible %}
+              <a href="{% url 'booking:hide_parking_zone' parking.pk %}" class="btn btn-warning btn-sm mt-2">Скрыть парковку</a>
+            {% else %}
+              <span class="text-muted">Эта парковка скрыта</span><br>
+              <a href="{% url 'booking:show_parking_zone' parking.pk %}" class="btn btn-success btn-sm mt-2">Сделать видимой</a>
+            {% endif %}
+<a href="{% url 'booking:edit_parking_zone' parking.pk %}" class="btn btn-primary btn-sm mt-2">Редактировать</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Вы ещё не добавили ни одной парковки.</p>
+  {% endif %}
+</div>
+    <a href="{% url 'booking:profile' %}" class="btn btn-secondary w-100 mt-2">Назад в профиль</a>
+{% endblock %}

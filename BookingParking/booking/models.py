@@ -31,6 +31,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False, verbose_name="Администратор")
     is_blocked = models.BooleanField(default=False, verbose_name="Заблокирован")
     date_joined = models.DateTimeField(default=now, verbose_name="Дата регистрации")
+    passport_data = models.CharField(max_length=255, blank=True, null=True, verbose_name="Паспортные данные")
+    is_verified = models.BooleanField(default=False, verbose_name="Подтверждённый пользователь")
+    ACCOUNT_TYPE_CHOICES = (
+        ('individual', 'Частное лицо'),
+        ('company', 'Компания'),
+    )
+    phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Номер телефона")
+    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPE_CHOICES, blank=True, null=True, verbose_name="Тип аккаунта")
+    company_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Название компании")
+    inn = models.CharField(max_length=20, blank=True, null=True, verbose_name="ИНН компании")
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -49,6 +60,8 @@ class ParkingZone(models.Model):
     tariff_per_hour = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Тариф за час")
     is_available = models.BooleanField(default=True, verbose_name="Доступна")
     photo = models.ImageField(upload_to='parking_photos/', null=True, blank=True, verbose_name="Фото парковки")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Владелец парковки")
+    is_visible = models.BooleanField(default=True, verbose_name="Отображать парковку на сайте")
 
     def __str__(self):
         return self.name
@@ -87,3 +100,17 @@ class Fine(models.Model):
 
     def __str__(self):
         return f"Штраф {self.amount} руб. за {self.booking}"
+
+
+class Review(models.Model):
+    parking = models.ForeignKey(ParkingZone, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField()
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('parking', 'user')
+
+    def __str__(self):
+        return f"{self.rating}★ для {self.parking.name}"

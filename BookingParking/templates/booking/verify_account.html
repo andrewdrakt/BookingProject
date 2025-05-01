@@ -1,0 +1,49 @@
+<form method="post">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="id_account_type">Тип аккаунта</label>
+    {{ form.account_type }}
+  </div>
+
+  <div id="passport-block" class="mb-3" style="display:none;">
+    <label for="id_passport_data">Паспортные данные</label>
+    {{ form.passport_data }}
+  </div>
+
+  <div id="company-block" style="display:none;">
+    <div class="mb-3">
+      <label for="id_company_name">Название компании</label>
+      {{ form.company_name }}
+    </div>
+    <div class="mb-3">
+      <label for="id_inn">ИНН компании</label>
+      {{ form.inn }}
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-success w-100">Отправить заявку</button>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const accountTypeSelect = document.getElementById('id_account_type');
+  const passportBlock = document.getElementById('passport-block');
+  const companyBlock = document.getElementById('company-block');
+
+  function toggleFields() {
+    if (accountTypeSelect.value === 'individual') {
+      passportBlock.style.display = 'block';
+      companyBlock.style.display = 'none';
+    } else if (accountTypeSelect.value === 'company') {
+      passportBlock.style.display = 'none';
+      companyBlock.style.display = 'block';
+    } else {
+      passportBlock.style.display = 'none';
+      companyBlock.style.display = 'none';
+    }
+  }
+
+  accountTypeSelect.addEventListener('change', toggleFields);
+
+  toggleFields();
+});
+</script>

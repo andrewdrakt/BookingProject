@@ -1,0 +1,171 @@
+{% extends 'booking/base.html' %}
+{% block title %}Добавить парковку{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-center animate-fade">Добавить парковку</h2>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors.0 }}
+              </div>
+            {% endif %}
+
+            <div id="map" style="width: 100%; height: 300px;" class="mb-4 rounded shadow-sm border"></div>
+
+            <input type="hidden" id="id_latitude" name="latitude" value="{{ form.latitude.value|default:'' }}" required>
+            <input type="hidden" id="id_longitude" name="longitude" value="{{ form.longitude.value|default:'' }}" required>
+
+            <div class="mb-3">
+              <label for="id_address" class="form-label">Адрес парковки</label>
+              <input type="text" id="id_address" name="address" class="form-control" placeholder="Укажите ближайший адрес" required>
+              {% for error in form.address.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_name" class="form-label">Название зоны</label>
+              <input type="text" name="name" id="id_name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" placeholder="Например, Парковка ВестПлаза" value="{{ form.name.value|default:'' }}" required>
+              {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_total_places" class="form-label">Количество мест</label>
+              <input type="number" name="total_places" id="id_total_places" class="form-control {% if form.total_places.errors %}is-invalid{% endif %}" min="1" value="{{ form.total_places.value|default:'' }}" required>
+              {% for error in form.total_places.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_tariff_per_hour" class="form-label">Тариф за час (₽)</label>
+              <input type="number" name="tariff_per_hour" id="id_tariff_per_hour" step="0.01" class="form-control {% if form.tariff_per_hour.errors %}is-invalid{% endif %}" min="0" value="{{ form.tariff_per_hour.value|default:'' }}" required>
+              {% for error in form.tariff_per_hour.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_barrier_ip" class="form-label">IP шлагбаума</label>
+              <input type="text" name="barrier_ip" id="id_barrier_ip" required pattern="...">
+              {% for error in form.barrier_ip.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" name="is_available" id="id_is_available" class="form-check-input" {% if form.is_available.value or form.is_available.value is None %}checked{% endif %}>
+              <label for="id_is_available" class="form-check-label">Доступна для бронирования</label>
+            </div>
+
+            <div class="mb-3">
+              <label for="id_photo" class="form-label">Фото парковки</label>
+              <input type="file" name="photo" id="id_photo" class="form-control {% if form.photo.errors %}is-invalid{% endif %}">
+              {% for error in form.photo.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+              <img id="photo_preview" src="#" alt="Превью" class="img-fluid mt-2 rounded shadow-sm" style="display:none; max-height: 200px;">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 mt-3">Добавить парковку</button>
+            <a href="{% url 'booking:profile' %}" class="btn btn-outline-secondary w-100 mt-2">Назад в профиль</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block mapscripts %}
+{{ block.super }}
+<script>
+ymaps.ready(function () {
+  const latInput = document.getElementById("id_latitude");
+  const lonInput = document.getElementById("id_longitude");
+  const addressInput = document.getElementById("id_address");
+
+  const map = new ymaps.Map("map", {
+    center: [55.751574, 37.573856],
+    zoom: 10,
+    controls: ["searchControl"]
+  });
+
+  const searchControl = map.controls.get("searchControl");
+  let placemark;
+
+  function updatePlacemark(coords, address) {
+    if (!placemark) {
+      placemark = new ymaps.Placemark(coords, {}, { draggable: true });
+      map.geoObjects.add(placemark);
+      placemark.events.add("dragend", function () {
+        const newCoords = placemark.geometry.getCoordinates();
+        updateCoords(newCoords);
+        reverseGeocode(newCoords);
+      });
+    } else {
+      placemark.geometry.setCoordinates(coords);
+    }
+
+    updateCoords(coords);
+    if (address) {
+      addressInput.value = address;
+    }
+    map.setCenter(coords, 16);
+  }
+
+  function updateCoords(coords) {
+    latInput.value = coords[0].toFixed(6);
+    lonInput.value = coords[1].toFixed(6);
+  }
+
+ 
+
+  map.events.add("click", function (e) {
+    const coords = e.get("coords");
+    
+    updatePlacemark(coords);
+  });
+
+  searchControl.events.add("resultselect", function (e) {
+    const index = e.get("index");
+    searchControl.getResult(index).then(function (result) {
+      const coords = result.geometry.getCoordinates();
+      const address = result.getAddressLine();
+      updatePlacemark(coords, address);
+    });
+  });
+
+  if (latInput.value && lonInput.value) {
+    const coords = [parseFloat(latInput.value), parseFloat(lonInput.value)];
+    updatePlacemark(coords, addressInput.value);
+  }
+});
+</script>
+<script>
+document.getElementById('id_photo').addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('photo_preview');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.src = '#';
+    preview.style.display = 'none';
+  }
+});
+</script>
+    <script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  const lat = document.getElementById("id_latitude").value;
+  const lon = document.getElementById("id_longitude").value;
+
+  if (!lat || !lon) {
+    e.preventDefault();
+    alert("Сначала выберите точку на карте. Без координат парковка не может быть создана.");
+  }
+});
+</script>
+{% endblock %}

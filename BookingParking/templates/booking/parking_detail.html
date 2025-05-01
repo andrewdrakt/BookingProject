@@ -20,10 +20,23 @@
     <div class="card-body">
         <h5 class="card-title">{{ parking.name }}</h5>
         <p class="card-text">
-            <strong>Адрес:</strong> {{ parking.address }}<br>
-            <strong>Количество мест:</strong> {{ parking.total_places }}<br>
-            <strong>Тариф за час:</strong> {{ parking.tariff_per_hour }} руб.
-        </p>
+    <strong>Адрес:</strong> {{ parking.address }}<br>
+    {% if parking.owner %}
+  <strong>Владелец:</strong>
+  {% if parking.owner.account_type == "company" and parking.owner.company_name %}
+    Компания: {{ parking.owner.company_name }}
+  {% elif parking.owner.account_type == "individual" %}
+    Частное лицо
+  {% else %}
+    Не указан
+  {% endif %}
+{% else %}
+  <strong>Владелец:</strong> Не указан
+{% endif %}
+        <br>
+    <strong>Количество мест:</strong> {{ parking.total_places }}<br>
+    <strong>Тариф за час:</strong> {{ parking.tariff_per_hour }} руб.
+</p>
         {% if unavailable %}
             <p class="text-danger">Парковка недоступна (ремонт или иное).</p>
         {% else %}
@@ -31,7 +44,9 @@
                 <div class="alert alert-danger">{{ error }}</div>
             {% endif %}
             <form method="post" class="mt-3" id="booking-form">
+            
                 {% csrf_token %}
+                <div id="availability-message" class="mt-3"></div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label for="start_date">Дата начала:</label>
@@ -57,11 +72,48 @@
 </div>
                 <button type="submit" class="btn btn-info">Забронировать</button>
             </form>
-        {% endif %}
-    <div id="map" style="width: 100%; height: 400px;" class="mt-4"></div>
+{% endif %}
+{% if parking.latitude and parking.longitude %}
+  <div id="map" style="width: 100%; height: 400px;" class="mt-4"></div>
+{% else %}
+  <p class="text-muted mt-4">Координаты для отображения карты не заданы.</p>
+{% endif %}
+    
+    
+    <hr>
+<h5>Отзывы</h5>
+{% if avg_rating %}
+<p><strong>Средняя оценка:</strong> {{ avg_rating|floatformat:1 }} ★</p>
+{% endif %}
+<p class="mt-3"><a href="{% url 'booking:home' %}" class="btn btn-link">Вернуться на главную</a></p>
+{% for review in reviews %}
+<div class="border rounded p-2 mb-2">
+  <div><strong>{{ review.rating }}★</strong></div>
+  <div class="text-muted" style="font-size: 0.9em">{{ review.created_at|date:"d.m.Y H:i" }}</div>
+  {% if review.comment %}
+    <div>{{ review.comment }}</div>
+  {% endif %}
+</div>
+{% empty %}
+<p class="text-muted">Отзывов пока нет.</p>
+{% endfor %}
+
+{% if can_review and review_form %}
+<form method="post" class="mt-3">
+  {% csrf_token %}
+  {{ review_form.as_p }}
+<button type="submit" name="review_submit" class="btn btn-success">
+  {% if existing_review %}Обновить отзыв{% else %}Оставить отзыв{% endif %}
+</button>
+
+</form>
+{% elif not can_review %}
+<p class="text-muted">Только подтверждённые пользователи, завершившие бронирование, могут оставить отзыв.</p>
+{% endif %}
+
     </div>
 </div>
-<p class="mt-3"><a href="{% url 'booking:home' %}" class="btn btn-link">Вернуться на главную</a></p>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -96,16 +148,44 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    startDateInput.addEventListener("change", calculatePrice);
-    startTimeInput.addEventListener("change", calculatePrice);
-    endDateInput.addEventListener("change", calculatePrice);
-    endTimeInput.addEventListener("change", calculatePrice);
+    [startDateInput, startTimeInput, endDateInput, endTimeInput].forEach(input => {
+  input.addEventListener("change", () => {
+    calculatePrice();
+    checkAvailability();
+  });
 });
+    
+});
+function checkAvailability() {
+  const startDate = document.getElementById("start_date").value;
+  const startTime = document.getElementById("start_time").value;
+  const endDate = document.getElementById("end_date").value;
+  const endTime = document.getElementById("end_time").value;
+
+  if (!(startDate && startTime && endDate && endTime)) return;
+
+  const start = `${startDate}T${startTime}`;
+  const end = `${endDate}T${endTime}`;
+
+  fetch(`/check-availability/{{ parking.id }}/?start=${start}&end=${end}`)
+    .then(res => res.json())
+    .then(data => {
+      const msgBox = document.getElementById("availability-message");
+      if (data.available) {
+        msgBox.textContent = `Доступно мест: ${data.available_places}`;
+        msgBox.className = "alert alert-success text-dark mt-3";
+      } else {
+        msgBox.textContent = "Нет свободных мест на выбранный период.";
+        msgBox.className = "alert alert-danger text-dark mt-3";
+      }
+    });
+}
+
 </script>
+{% endblock %}
 
-
-<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ YANDEX_API_KEY }}"></script>
-
+{% block mapscripts %}
+{{ block.super }}
 <script>
   ymaps.ready(function () {
     const coords = ["{{ parking.latitude|floatformat:"6" }}".replace(",", "."), "{{ parking.longitude|floatformat:"6" }}".replace(",", ".")].map(parseFloat);
@@ -124,6 +204,4 @@ document.addEventListener("DOMContentLoaded", function() {
     map.setCenter(coords);
   });
 </script>
-
-
 {% endblock %}

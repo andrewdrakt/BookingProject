@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Сервис бронирования парковок{% endblock %}</title>
+    <title>{% block title %}Booking Parking{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.rings.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.cells.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     
@@ -23,7 +18,9 @@
 <div class="page-wrapper">
 
 <header class="d-flex justify-content-between align-items-center p-3">
-    <h1 class="h5 mb-0">Сервис бронирования парковок</h1>
+    <h1 class="h5 mb-0">
+  <a href="{% url 'booking:home' %}" class="text-decoration-none fw-bold text-white">Booking Parking</a>
+    </h1>
     <div class="d-flex align-items-center">
         {% if user.is_authenticated %}
             <span class="me-3">Привет, {{ user.email }}</span>
@@ -95,6 +92,9 @@
     {% endif %}
   </div>
 </div>
+{% block mapscripts %}
+<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ YANDEX_API_KEY }}"></script>
+{% endblock %}
 </body>
 {#<script>#}
 {#function initBackgroundEffect() {#}

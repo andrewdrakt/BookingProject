@@ -8,23 +8,103 @@ from django.shortcuts import redirect
 import requests
 from .models import ParkingZone
 from .models import User
+from django.core.mail import send_mail
+from django.conf import settings
+from booking.services.encryption import decrypt_data
+from django.contrib.admin import SimpleListFilter
+def display_passport_data(obj):
+    try:
+        return decrypt_data(obj.passport_data)
+    except:
+        return "Ошибка расшифровки"
+
+def display_inn(obj):
+    try:
+        return decrypt_data(obj.inn)
+    except:
+        return "Ошибка расшифровки"
+
+@admin.action(description="Подтвердить выбранные аккаунты")
+def confirm_users(modeladmin, request, queryset):
+    for user in queryset:
+        if not user.is_verified:
+            user.is_verified = True
+
+            user.save()
+            send_mail(
+                "Ваш аккаунт подтверждён!",
+                "Здравствуйте!\n\nВаша заявка на верификацию успешно одобрена. Теперь вы можете добавлять свои парковочные зоны.\n\n С уважением, команда Automatics Systems",
+                settings.EMAIL_HOST_USER,
+                [user.email],
+                fail_silently=False,
+            )
+class VerificationStatusFilter(SimpleListFilter):
+    title = 'Статус верификации'
+    parameter_name = 'verification_status'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('pending', 'Ожидают подтверждения'),
+            ('verified', 'Подтверждённые'),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'pending':
+            return queryset.filter(is_verified=False, account_type__isnull=False)
+        if self.value() == 'verified':
+            return queryset.filter(is_verified=True)
+        return queryset
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'car_number', 'is_staff', 'is_active', 'is_superuser')
+    list_display = ('email', 'is_verified', 'account_type',
+                    'company_name', 'display_inn', 'display_passport_data', 'display_phone',
+                    'car_number', 'is_staff', 'is_active', 'is_superuser')
+    list_filter = ('is_verified', 'account_type', VerificationStatusFilter, 'account_type')
     ordering = ('email',)
-    search_fields = ('email', 'car_number',)
+    search_fields = ('email', 'car_number','company_name')
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('car_number',)}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_blocked', 'groups', 'user_permissions')}),
     )
 
+    def display_passport_data(self, obj):
+        if obj.passport_data:
+            try:
+                return decrypt_data(obj.passport_data)
+            except Exception:
+                return "Ошибка расшифровки"
+        return "-"
+
+    def display_inn(self, obj):
+        if obj.inn:
+            try:
+                return decrypt_data(obj.inn)
+            except Exception:
+                return "Ошибка расшифровки"
+        return "-"
+
+    def display_phone(self, obj):
+        if obj.phone_number:
+            try:
+                return decrypt_data(obj.phone_number)
+            except Exception:
+                return "-"
+        return "-"
+
+    actions = [confirm_users]
+    display_passport_data.short_description = "Паспортные данные"
+    display_inn.short_description = "ИНН компании"
+    display_phone.short_description = "Номер телефона"
+
+
 @admin.register(ParkingZone)
 class ParkingZoneAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'barrier_ip', 'barrier_control')
+    list_display = ('name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'display_owner', 'barrier_ip', 'barrier_control')
     list_filter = ('is_available',)
     search_fields = ('name', 'address')
-    fields = ('name', 'address', 'latitude', 'longitude', 'barrier_ip', 'total_places', 'tariff_per_hour', 'photo', 'is_available')
+    fields = ('name', 'address', 'latitude', 'longitude', 'barrier_ip', 'total_places', 'tariff_per_hour', 'photo', 'is_available', 'owner')
+    autocomplete_fields = ('owner',)
 
     class Media:
         js = ('js/parking_admin_map.js',)
@@ -32,6 +112,21 @@ class ParkingZoneAdmin(admin.ModelAdmin):
             'all': ('css/hide_fields.css',)
         }
 
+    def render(self):
+        from django.conf import settings
+        return format_html(
+            '<script id="yandex-key" data-key="{}"></script>',
+            settings.YANDEX_API_KEY
+        )
+    def display_owner(self, obj):
+        if obj.owner:
+            if obj.owner.account_type == 'company' and obj.owner.company_name:
+                return f"Компания: {obj.owner.company_name}"
+            else:
+                return "Частное лицо"
+        return "-"
+
+    display_owner.short_description = "Владелец парковки"
     def barrier_control(self, obj):
         return format_html(
             '<div style="display: flex; flex-wrap: wrap; gap: 5px;">'

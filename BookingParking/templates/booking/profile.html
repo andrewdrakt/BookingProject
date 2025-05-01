@@ -6,13 +6,15 @@
 <h2 class="mb-3">Профиль пользователя</h2>
 
 <a href="{% url 'booking:home' %}" class="btn btn-outline-primary mb-4">← Вернуться на главную</a>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="btn-group d-flex mb-4" role="group">
   <button class="btn btn-info w-100" onclick="showSection('current')">Бронирования</button>
   <button class="btn btn-info w-100" onclick="showSection('history')">История</button>
   <button class="btn btn-info w-100" onclick="showSection('fines')">Штрафы</button>
-  <button class="btn btn-info w-100" onclick="showSection('settings')">Настройки</button>
-  <button class="btn btn-secondary w-100" disabled>...</button>
+  <button class="btn btn-info w-100" onclick="showSection('verified')">Верификация</button> 
+    <button class="btn btn-info w-100" onclick="showSection('settings')">Настройки</button>
+
 </div>
 
 <section id="section-current" style="display: block;">
@@ -32,19 +34,19 @@
             </p>
             <div class="action-container">
               {% if booking.status == 'active' and now >= booking.start_datetime %}
-                <a href="{% url 'booking:open_barrier' booking.id %}" class="btn btn-success">Открыть шлагбаум</a>
-              {% elif booking.status == 'inside' %}
-                <a href="{% url 'booking:confirm_exit' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
-              {% elif booking.status == 'overdue' %}
-                {% if booking.has_unpaid_fines %}
-                    <a href="{% url 'booking:pay_penalty' booking.id %}" class="btn btn-warning">Оплатить штраф ({{ booking.total_fine_amount|floatformat:2 }} руб.)
-                    </a>
-                {% endif %}
-                  <a href="{% url 'booking:leave_parking' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
-                {% endif %}
-              {% else %}
-                <span class="text-muted">Ожидается действие</span>
-              {% endif %}
+    <a href="{% url 'booking:open_barrier' booking.id %}" class="btn btn-success">Открыть шлагбаум</a>
+{% elif booking.status == 'inside' %}
+    <a href="{% url 'booking:confirm_exit' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
+{% elif booking.status == 'overdue' %}
+    {% if booking.has_unpaid_fines %}
+        <a href="{% url 'booking:pay_penalty' booking.id %}" class="btn btn-warning">
+            Оплатить штраф ({{ booking.total_fine_amount|floatformat:2 }} руб.)
+        </a>
+    {% endif %}
+    <a href="{% url 'booking:leave_parking' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
+{% else %}
+    <span class="text-muted">Ожидается действие</span>
+{% endif %}
             </div>
           </div>
         </div>
@@ -141,6 +143,11 @@
   <p><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y H:i" }}</p>
   <p><strong>Последний вход:</strong> {{ user.last_login|date:"d.m.Y H:i" }}</p>
 </div>
+    {% if not user.car_number %}
+  <div class="alert alert-warning">
+    Чтобы бронировать парковочные места, пожалуйста, укажите номер автомобиля ниже.
+  </div>
+{% endif %}
   <form method="post" action="{% url 'booking:update_car_number' %}" class="mb-3">
     {% csrf_token %}
     <div class="input-group">
@@ -154,10 +161,57 @@
   <a href="{% url 'booking:password_reset' %}" class="btn btn-outline-primary btn-sm mb-2 w-100">Сбросить пароль</a>
   <a href="{% url 'booking:logout' %}" class="btn btn-outline-danger btn-sm w-100">Выйти из аккаунта</a>
 </section>
+    
+<section id="section-verified" style="display: none;">
+  <h4>Подтверждение аккаунта</h4>
+
+  {% if not user.is_verified %}
+    <p>Ваш аккаунт ещё не подтверждён.</p>
+    <form method="post" action="{% url 'booking:verify_account' %}">
+      {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_account_type">Тип аккаунта</label>
+            <select name="account_type" id="id_account_type" class="form-select" required>
+              <option value="">Выберите тип</option>
+              <option value="individual">Частное лицо</option>
+              <option value="company">Компания</option>
+            </select>
+          </div>
+        
+          <div class="mb-3">
+            <label for="id_phone_number">Номер телефона</label>
+            <input type="text" name="phone_number" id="id_phone_number" class="form-control" placeholder="Введите номер телефона" required>
+          </div>
+        
+          <div id="passport-block" class="mb-3" style="display:none;">
+            <label for="id_passport_data">Паспортные данные</label>
+            <input type="text" name="passport_data" id="id_passport_data" class="form-control" placeholder="Введите серию и номер паспорта">
+          </div>
+        
+          <div id="company-block" style="display:none;">
+            <div class="mb-3">
+              <label for="id_company_name">Название компании</label>
+              <input type="text" name="company_name" id="id_company_name" class="form-control" placeholder="Название компании">
+            </div>
+            <div class="mb-3">
+              <label for="id_inn">ИНН компании</label>
+              <input type="text" name="inn" id="id_inn" class="form-control" placeholder="ИНН компании">
+            </div>
+          </div>
+
+
+      <button type="submit" class="btn btn-success w-100">Отправить заявку</button>
+    </form>
+  {% else %}
+    <p style="color:#5bef5b;"><strong>Ваш аккаунт подтверждён.</strong></p>
+    <a href="{% url 'booking:add_parking_zone' %}" class="btn btn-primary w-100 mb-2">Добавить парковку</a>
+    <a href="{% url 'booking:my_parking_zones' %}" class="btn btn-outline-info w-100">Мои парковки</a>
+  {% endif %}
+</section>
 
 <script>
   function showSection(id) {
-    const sections = ['current', 'history', 'fines', 'settings'];
+    const sections = ['current', 'history', 'fines', 'verified', 'settings'];
     sections.forEach(name => {
       document.getElementById('section-' + name).style.display = (name === id) ? 'block' : 'none';
     });
@@ -226,4 +280,75 @@ document.addEventListener("DOMContentLoaded", function () {
   dateFilter.addEventListener("change", filterItems);
 });
 </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const accountTypeSelect = document.getElementById('id_account_type');
+  const passportBlock = document.getElementById('passport-block');
+  const companyBlock = document.getElementById('company-block');
+
+  function toggleFields() {
+    if (accountTypeSelect.value === 'individual') {
+      passportBlock.style.display = 'block';
+      companyBlock.style.display = 'none';
+    } else if (accountTypeSelect.value === 'company') {
+      passportBlock.style.display = 'none';
+      companyBlock.style.display = 'block';
+    } else {
+      passportBlock.style.display = 'none';
+      companyBlock.style.display = 'none';
+    }
+  }
+
+  accountTypeSelect.addEventListener('change', toggleFields);
+  toggleFields(); 
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[action="{% url 'booking:verify_account' %}"]');
+  const accountTypeSelect = document.getElementById('id_account_type');
+  const passportDataInput = document.getElementById('id_passport_data');
+  const companyNameInput = document.getElementById('id_company_name');
+  const innInput = document.getElementById('id_inn');
+
+  form.addEventListener('submit', function(event) {
+    let valid = true;
+    const accountType = accountTypeSelect.value;
+
+    if (accountType === 'individual') {
+  if (!passportDataInput.value.trim()) {
+    valid = false;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Ошибка!',
+      text: 'Пожалуйста, укажите паспортные данные.'
+    });
+  }
+} else if (accountType === 'company') {
+  if (!companyNameInput.value.trim()) {
+    valid = false;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Ошибка!',
+      text: 'Пожалуйста, укажите название компании.'
+    });
+  } else if (!innInput.value.trim()) {
+    valid = false;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Ошибка!',
+      text: 'Пожалуйста, укажите ИНН компании.'
+    });
+  }
+}
+
+
+    if (!valid) {
+      event.preventDefault();
+    }
+  });
+});
+</script>
+    
 {% endblock %}

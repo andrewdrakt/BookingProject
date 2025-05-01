@@ -17,12 +17,33 @@
   <img src="{% static 'images/default.jpg' %}" class="img-fluid" alt="Фото парковки">
 {% endif %}
     <div class="card-body">
-                    <h5 class="card-title">{{ parking.name }}</h5>
-                    <p class="card-text">
-        <strong>Адрес:</strong> {{ parking.address }}<br>
-                <p>Мест: {{ parking.total_places }} | Тариф: {{ parking.tariff_per_hour }} руб/час</p>
-
-            </p>
+        <h5 class="card-title">{{ parking.name }}</h5>
+        <p class="card-text">
+            <strong>Адрес:</strong> {{ parking.address }}<br>
+            {% if parking.owner %}
+  <strong>Владелец:</strong>
+  {% if parking.owner.account_type == "company" and parking.owner.company_name %}
+    Компания: {{ parking.owner.company_name }}
+  {% elif parking.owner.account_type == "individual" %}
+    Частное лицо
+  {% else %}
+    Не указан
+  {% endif %}
+{% else %}
+  <strong>Владелец:</strong> Не указан
+{% endif %}
+<br>
+            Мест: {{ parking.total_places }} | Тариф: {{ parking.tariff_per_hour }} руб/час
+        </p>
+    <h5 class="card-title d-flex justify-content-between align-items-center">
+  
+  {% if parking.avg_rating %}
+    <small class="text-muted fw-normal" style="font-size: 0.9em;">
+      {{ parking.avg_rating|floatformat:1|default:"—" }} ★
+    </small>
+  {% endif %}
+</h5>
+</h5>
                 </div>
         <div class="card-footer bg-transparent border-top-0">
                     <a href="{% url 'booking:parking_detail' parking.id %}" class="btn btn-info btn-block">Выбрать парковку</a>

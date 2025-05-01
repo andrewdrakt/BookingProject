@@ -1,4 +1,3 @@
-/* static/css/style.css */
 
 html, body {
     height: 100%;
@@ -52,23 +51,7 @@ body.unauth-bg .page-wrapper {
     background-size: cover;
 
 }
-/*body.unauth-bg .page-wrapper {*/
-/*  position: relative;*/
-/*  overflow: hidden; !* чтобы псевдо-элемент не вылезал *!*/
 
-/*}*/
-
-/*body.unauth-bg .page-wrapper::before {*/
-/*  content: "";*/
-/*  position: fixed;      !* <-- для «залипания» фонового слоя *!*/
-/*  top: 0; left: 0;*/
-/*  width: 100vw;*/
-/*  height: 100vh;*/
-/*  background: url('/static/images/unauth_bg.png') center/cover no-repeat;*/
-/*  filter: blur(8px);    !* легкое размытие *!*/
-/*  transform: scale(1.05); !* чтобы края не появлялись при размытии *!*/
-/*  z-index: -1;          !* позади всего контента *!*/
-/*}*/
 
 .animate-fade.visible {
     opacity: 1;
@@ -263,7 +246,7 @@ header p a {
     font-weight: bold;
 }
 
-/* Кнопки */
+
 button, .btn {
     background-color: #40e0d0;
     color: white;
@@ -365,6 +348,16 @@ header {
     transform: translateY(0);
   }
 }
+footer {
+  background: linear-gradient(to right, #37e0da, #188be0);
+  color: white;
+  padding: 1rem 2rem;
+  text-align: center;
+  font-weight: 500;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
 
 .auth-card p {
     display: flex;
@@ -406,7 +399,7 @@ header {
   border-radius: inherit;
 }
 
-/* Мобильная адаптация */
+
 @media (max-width: 768px) {
   .parking-image-wrapper {
     aspect-ratio: 4 / 3;
@@ -531,7 +524,6 @@ a:hover {
     color: #005757;
 }
 
-/* Таблицы */
 table {
     border-collapse: collapse;
     width: 100%;
@@ -665,6 +657,7 @@ header .btn-outline-light:hover {
   }
 }
 
+
 .parking-form,
 .parking-form label,
 .parking-form .form-control {
@@ -680,7 +673,7 @@ header .btn-outline-light:hover {
   backdrop-filter: blur(6px);
 }
 
-/* Стилизация скролла */
+
 .scroll-box::-webkit-scrollbar {
   width: 8px;
 }
@@ -694,7 +687,7 @@ header .btn-outline-light:hover {
   background: transparent;
 }
 
-/* Мобильная адаптация */
+
 @media (max-width: 768px) {
   .scroll-box {
     max-height: 300px;

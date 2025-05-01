@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection('current');
 });
 document.addEventListener("DOMContentLoaded", function() {
-    // Пример: загрузка списка парковок
+
     fetch('/api/parking-lots/')
     .then(response => response.json())
     .then(data => {
@@ -50,21 +50,19 @@ document.addEventListener("DOMContentLoaded", function() {
     .catch(error => console.error('Ошибка при загрузке парковок:', error));
 });
 
-// Функция выбора парковки (показ формы бронирования)
 function selectParking(parkingId, parkingAddress) {
     document.getElementById('bookingForm').style.display = 'block';
     document.getElementById('parkingAddress').textContent = parkingAddress;
-    // Здесь можно добавить вызов API для получения доступных мест, графика и т.п.
+
 }
 
-// Обработка бронирования (отправка данных бронирования)
 document.getElementById('confirmBooking').addEventListener('click', function() {
-    // Собираем данные из формы
+
     const bookingData = {
-        parking_lot: 1, // пример – фактически нужно передавать выбранную парковку/место
-        user: 1,        // идентификатор пользователя (из сессии после авторизации)
-        start_time: new Date(), // здесь нужно сформировать корректное время на основе выбора пользователя
-        end_time: new Date(new Date().getTime() + 3600000)  // например, +1 час
+        parking_lot: 1,
+        user: 1,
+        start_time: new Date(),
+        end_time: new Date(new Date().getTime() + 3600000)
     };
 
     fetch('/api/create-booking/', {
@@ -77,13 +75,13 @@ document.getElementById('confirmBooking').addEventListener('click', function() {
     })
     .then(response => response.json())
     .then(data => {
-        // После успешного бронирования показать окно управления шлагбаумом
+
         document.getElementById('barrierControl').style.display = 'block';
     })
     .catch(error => console.error('Ошибка бронирования:', error));
 });
 
-// Обработка открытия шлагбаума с подтверждением
+
 document.getElementById('openBarrierButton').addEventListener('click', function() {
     if (confirm('Вы действительно хотите открыть шлагбаум?')) {
         // Отправляем команду на открытие шлагбаума
@@ -103,7 +101,6 @@ document.getElementById('openBarrierButton').addEventListener('click', function(
     }
 });
 
-// Функция получения CSRF-токена (для POST-запросов)
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {

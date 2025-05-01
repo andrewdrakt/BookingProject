@@ -12,15 +12,20 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from cryptography.fernet import Fernet
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from decouple import config
 
-
+SECRET_KEY = config('SECRET_KEY')
+ENCRYPTION_KEY = config('ENCRYPTION_KEY').encode()
+YANDEX_API_KEY = config('YANDEX_API_KEY')
+ADMIN_EMAIL=config('ADMIN_EMAIL')
+FASTAPI_URL = "http://127.0.0.1:8000"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1-n@&n5gg+6na^+qa0q=o11#8_&thwsvs=er+$4q++kb(-@8x+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'booking',
     'rest_framework',
+    'widget_tweaks',
+
 ]
 
 MIDDLEWARE = [
@@ -121,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-YANDEX_API_KEY = "5e50de3d-ee8e-4918-a10f-106a707e6fac"
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -139,20 +146,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'amugusik12@gmail.com'
-EMAIL_HOST_PASSWORD = 'yaie pcei ndzf algt'
-
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
+EMAIL_PORT = config('EMAIL_PORT', cast=int, default=587)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 AUTH_USER_MODEL = 'booking.User'
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://b216-185-235-241-201.ngrok-free.app",
-    "https://05f6-185-235-241-201.ngrok-free.app",
+
 ]
 
 # Default primary key field type

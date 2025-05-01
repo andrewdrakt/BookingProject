@@ -6,6 +6,6 @@ db.sqlite3
 
 .pio/
 .vscode/
-
+nonpublic.h
 *.log
 .DS_Store

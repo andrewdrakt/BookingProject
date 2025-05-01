@@ -14,18 +14,19 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.http import HttpResponse
 from prometheus_client import CONTENT_TYPE_LATEST
 from .metrics import get_prometheus_metrics
-
+from .forms import VerificationForm, ParkingZoneForm, ParkingZoneEditForm, ReviewForm
 from .forms import RegistrationForm, LoginForm
-from .models import User, ParkingZone, Booking, Fine
-
-
+from .models import User, ParkingZone, Booking, Fine, Review
+from booking.services.encryption import encrypt_data
+from django.db.models import Avg
 def home(request):
     if request.user.is_authenticated:
-        parkings = ParkingZone.objects.all()
+
+        parkings = ParkingZone.objects.filter(is_visible=True).annotate(avg_rating=Avg('reviews__rating'))
         active_bookings = Booking.objects.select_related('parkingzone').prefetch_related('fines').filter(
             user=request.user,
             status__in=['active', 'inside', 'overdue']
@@ -261,8 +262,14 @@ def mark_overdue_bookings():
 
 @login_required
 def parking_detail(request, parking_id):
+    if not request.user.car_number:
+        messages.error(request, "Чтобы бронировать парковку, добавьте номер автомобиля в настройках профиля.")
+        return redirect('booking:profile')
     parking = get_object_or_404(ParkingZone, id=parking_id)
     today = timezone.localdate()
+    has_booking = Booking.objects.filter(user=request.user, parkingzone=parking, status='finished').exists()
+    can_review = request.user.is_verified and has_booking
+    existing_review = Review.objects.filter(parking=parking, user=request.user).first()
     if request.user.is_blocked:
         messages.error(request, "Ваш аккаунт заблокирован, бронирование невозможно. Обратитесь на контактную почту для того, чтобы узнать подобрости.")
         return redirect('booking:profile')
@@ -274,6 +281,19 @@ def parking_detail(request, parking_id):
     if not parking.is_available:
         context['unavailable'] = True
         return render(request, 'booking/parking_detail.html', context)
+    if 'review_submit' in request.POST:
+        if can_review and not existing_review:
+            review_form = ReviewForm(request.POST, instance=existing_review)
+            if review_form.is_valid():
+                new_review = review_form.save(commit=False)
+                new_review.user = request.user
+                new_review.parking = parking
+                new_review.save()
+                messages.success(request, "Спасибо за отзыв!")
+                return redirect('booking:parking_detail', parking_id=parking.id)
+        else:
+            messages.error(request, "Вы не можете оставить отзыв.")
+
     if request.method == "POST":
         start_date = request.POST.get('start_date')
         start_time = request.POST.get('start_time')
@@ -304,6 +324,18 @@ def parking_detail(request, parking_id):
             context['error'] = "Нет свободных мест на указанный период."
             return render(request, 'booking/parking_detail.html', context)
 
+        user_overlap = Booking.objects.filter(
+            user=request.user,
+            parkingzone=parking,
+            end_datetime__gt=start_dt,
+            start_datetime__lt=end_dt,
+            status__in=['pending', 'active', 'inside']
+        ).exists()
+
+        if user_overlap:
+            context['error'] = "У вас уже есть бронь на это время в этой парковке."
+            return render(request, 'booking/parking_detail.html', context)
+
         new_booking = Booking.objects.create(
             user=request.user,
             parkingzone=parking,
@@ -314,8 +346,18 @@ def parking_detail(request, parking_id):
             paid=False
         )
         return redirect('booking:payment', booking_id=new_booking.id)
+    reviews = parking.reviews.all().order_by('-created_at')
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
 
+    context.update({
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'review_form': ReviewForm(instance=existing_review) if can_review else None,
+        'can_review': can_review,
+    })
     return render(request, 'booking/parking_detail.html', context)
+
+
 
 def parse_datetime(date_str, time_str):
     dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
@@ -429,7 +471,7 @@ def open_barrier(request, booking_id):
         response = requests.post(fastapi_url, json={"status": 0}, timeout=5)
         response.raise_for_status()
     except requests.RequestException as e:
-        messages.error(request, f"Ошибка при отправке запроса на открытие шлагбаума: {e}")
+        messages.error(request, "Шлагбаум сейчас недоступен. Обратитесь к администратору.")
         return redirect('booking:profile')
 
     booking.status = 'inside'
@@ -475,7 +517,7 @@ def leave_parking(request, booking_id):
         response = requests.post(fastapi_url, json={"status": 0}, timeout=5)
         response.raise_for_status()
     except requests.RequestException as e:
-        messages.error(request, f"Ошибка при закрытии шлагбаума: {e}")
+        messages.error(request, "Шлагбаум сейчас недоступен. Обратитесь к администратору.")
         return redirect('booking:profile')
     booking.status = 'finished'
     booking.save()
@@ -536,3 +578,162 @@ def extend_parking(request, booking_id):
 def metrics_view(request):
     data = get_prometheus_metrics()
     return HttpResponse(data, content_type=CONTENT_TYPE_LATEST)
+@login_required
+def verify_account(request):
+    if not request.user.is_active:
+        messages.error(request, "Подтвердите свою почту перед подачей заявки на верификацию.")
+        return redirect('booking:profile')
+    if request.user.is_verified:
+        messages.info(request, "Ваш аккаунт уже подтверждён.")
+        return redirect('booking:profile')
+    if request.user.account_type:
+        messages.info(request, "Вы уже подали заявку на подтверждение. Ожидайте решения администратора.")
+        return redirect('booking:profile')
+    if request.method == 'POST':
+        form = VerificationForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.account_type = form.cleaned_data['account_type']
+            user.company_name = form.cleaned_data['company_name'] if form.cleaned_data['account_type'] == 'company' else None
+
+            if form.cleaned_data['account_type'] == 'company':
+                if form.cleaned_data['inn']:
+                    user.inn = encrypt_data(form.cleaned_data['inn'])
+                else:
+                    user.inn = None
+            elif form.cleaned_data['account_type'] == 'individual':
+                if form.cleaned_data.get('passport_data'):
+                    user.passport_data = encrypt_data(form.cleaned_data['passport_data'])
+                else:
+                    user.passport_data = None
+
+            user.phone_number = encrypt_data(form.cleaned_data['phone_number'])
+            user.is_verified = False
+            user.save()
+            send_mail(
+                "Новая заявка на верификацию",
+                f"Пользователь {user.email} отправил заявку на подтверждение аккаунта.",
+                settings.EMAIL_HOST_USER,
+                [settings.ADMIN_EMAIL],
+                fail_silently=False,
+            )
+            messages.success(request, "Заявка на верификацию отправлена. Ожидайте подтверждения администратора.")
+            return redirect('booking:profile')
+    else:
+        form = VerificationForm()
+
+    return render(request, 'booking/verify_account.html', {'form': form})
+
+
+@login_required
+def add_parking_zone(request):
+    if not request.user.is_verified:
+        messages.error(request, "Только подтверждённые пользователи могут добавлять парковки.")
+        return redirect('booking:profile')
+
+    if request.method == 'POST':
+        form = ParkingZoneForm(request.POST, request.FILES)
+        if form.is_valid():
+            latitude = request.POST.get("latitude")
+            longitude = request.POST.get("longitude")
+
+            if not latitude or not longitude:
+                form.add_error(None, "Пожалуйста, укажите точку на карте, нажав по нужному месту.")
+            else:
+                parking_zone = form.save(commit=False)
+                parking_zone.latitude = latitude
+                parking_zone.longitude = longitude
+                parking_zone.owner = request.user
+                parking_zone.save()
+                messages.success(request, "Парковка успешно добавлена.")
+                return redirect('booking:profile')
+    else:
+        form = ParkingZoneForm()
+
+    return render(request, 'booking/add_parking_zone.html', {'form': form})
+
+@login_required
+def my_parking_zones(request):
+    user = request.user
+    zones = ParkingZone.objects.filter(owner=user)
+    return render(request, 'booking/my_parking_zones.html', {'zones': zones})
+
+@login_required
+def hide_parking_zone(request, pk):
+    parking = get_object_or_404(ParkingZone, pk=pk, owner=request.user)
+    parking.is_visible = False
+    parking.save()
+    messages.success(request, "Парковка скрыта.")
+    return redirect('booking:my_parking_zones')
+
+@login_required
+def edit_parking_zone(request, pk):
+    parking = get_object_or_404(ParkingZone, pk=pk, owner=request.user)
+
+    if request.method == 'POST':
+        form = ParkingZoneEditForm(request.POST, request.FILES, instance=parking)
+        if form.is_valid():
+            latitude = request.POST.get("latitude")
+            longitude = request.POST.get("longitude")
+
+            if not latitude or not longitude:
+                form.add_error(None, "Пожалуйста, укажите точку на карте.")
+            else:
+                parking = form.save(commit=False)
+                try:
+                    parking.latitude = float(latitude.replace(',', '.'))
+                    parking.longitude = float(longitude.replace(',', '.'))
+                except ValueError:
+                    form.add_error(None, "Ошибка при сохранении координат.")
+                    return render(request, 'booking/edit_parking_zone.html', {'form': form})
+
+                parking.save()
+                messages.success(request, "Парковка успешно обновлена.")
+                return redirect('booking:my_parking_zones')
+
+    else:
+        form = ParkingZoneEditForm(instance=parking)
+
+    return render(request, 'booking/edit_parking_zone.html', {
+        'form': form,
+        'YANDEX_API_KEY': settings.YANDEX_API_KEY
+    })
+
+@login_required
+def show_parking_zone(request, pk):
+    parking = get_object_or_404(ParkingZone, pk=pk, owner=request.user)
+    parking.is_visible = True
+    parking.save()
+    messages.success(request, "Парковка снова отображается.")
+    return redirect('booking:my_parking_zones')
+
+
+@require_GET
+@login_required
+def check_availability(request, parking_id):
+    from django.utils.dateparse import parse_datetime
+
+    parking = get_object_or_404(ParkingZone, id=parking_id)
+
+    start_str = request.GET.get("start")
+    end_str = request.GET.get("end")
+
+    try:
+        start = parse_datetime(start_str)
+        end = parse_datetime(end_str)
+    except Exception:
+        return JsonResponse({"error": "Неверный формат даты"}, status=400)
+
+    overlapping = Booking.objects.filter(
+        parkingzone=parking,
+        end_datetime__gt=start,
+        start_datetime__lt=end,
+        status__in=["pending", "active", "inside"]
+    ).count()
+
+    available = parking.total_places - overlapping
+
+    return JsonResponse({
+        "available": available > 0,
+        "available_places": max(0, available)
+    })

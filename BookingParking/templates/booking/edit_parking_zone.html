@@ -1,0 +1,122 @@
+{% extends 'booking/base.html' %}
+{% load widget_tweaks %}
+{% block title %}Редактировать парковку{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow rounded-4">
+    <div class="card-body p-4">
+      <h2 class="card-title mb-4 text-center">Редактировать парковку</h2>
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div id="map" style="width: 100%; height: 300px;" class="mb-4 rounded shadow-sm border"></div>
+
+<input type="hidden" id="id_latitude" name="latitude"
+  value="{% if form.latitude.value %}{{ form.latitude.value|floatformat:6 }}{% else %}{{ form.instance.latitude|floatformat:6 }}{% endif %}">
+
+<input type="hidden" id="id_longitude" name="longitude"
+  value="{% if form.longitude.value %}{{ form.longitude.value|floatformat:6 }}{% else %}{{ form.instance.longitude|floatformat:6 }}{% endif %}">
+
+        <div class="mb-3">
+          <label for="id_address" class="form-label">Адрес парковки</label>
+          <input type="text" id="id_address" name="address" value="{{ form.instance.address }}" class="form-control" required placeholder="Укажите ближайший адрес вручную">
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.name.id_for_label }}" class="form-label">Название зоны</label>
+          {{ form.name|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.total_places.id_for_label }}" class="form-label">Количество мест</label>
+          {{ form.total_places|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.tariff_per_hour.id_for_label }}" class="form-label">Тариф за час (₽)</label>
+          {{ form.tariff_per_hour|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+          <label for="id_barrier_ip" class="form-label">IP шлагбаума</label>
+          <input type="text" id="id_barrier_ip" name="barrier_ip" value="{{ form.instance.barrier_ip }}" class="form-control" required placeholder="например, 192.168.1.1">
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.photo.id_for_label }}" class="form-label">Фото парковки</label>
+          {{ form.photo|add_class:"form-control" }}
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="submit" class="btn btn-success px-4">Сохранить</button>
+          <a href="{% url 'booking:my_parking_zones' %}" class="btn btn-outline-secondary px-4">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block mapscripts %}
+{{ block.super }}
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    
+ymaps.ready(function () {
+  const latInput = document.getElementById("id_latitude");
+  const lonInput = document.getElementById("id_longitude");
+let lat = parseFloat(latInput.value.replace(",", "."));
+let lon = parseFloat(lonInput.value.replace(",", "."));
+  const hasCoords = !isNaN(lat) && !isNaN(lon);
+
+  const map = new ymaps.Map("map", {
+    center: hasCoords ? [lat, lon] : [55.751574, 37.573856],
+    zoom: hasCoords ? 16 : 10,
+    controls: ["searchControl"]
+  });
+
+  const searchControl = map.controls.get("searchControl");
+  let placemark = null;
+
+  function setPlacemark(coords) {
+    if (placemark) {
+      placemark.geometry.setCoordinates(coords);
+    } else {
+      placemark = new ymaps.Placemark(coords, {}, { draggable: true });
+      placemark.events.add("dragend", function () {
+        const newCoords = placemark.geometry.getCoordinates();
+        updateHiddenCoords(newCoords);
+      });
+      map.geoObjects.add(placemark);
+    }
+    updateHiddenCoords(coords);
+  }
+
+  function updateHiddenCoords(coords) {
+    latInput.value = coords[0].toFixed(6);
+    lonInput.value = coords[1].toFixed(6);
+  }
+
+  map.events.add("click", function (e) {
+    const coords = e.get("coords");
+    setPlacemark(coords);
+  });
+
+  searchControl.events.add("resultselect", function (e) {
+    const index = e.get("index");
+    searchControl.getResult(index).then(function (result) {
+      const coords = result.geometry.getCoordinates();
+      setPlacemark(coords);
+    });
+  });
+
+  if (hasCoords) {
+    setPlacemark([lat, lon]);
+  }
+});
+});
+</script>
+{% endblock %}
