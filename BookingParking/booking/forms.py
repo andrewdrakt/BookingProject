@@ -1,8 +1,6 @@
-# booking/forms.py
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import User, ParkingZone, Review
-
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Пароль")

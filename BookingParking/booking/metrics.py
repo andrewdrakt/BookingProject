@@ -1,4 +1,3 @@
-# booking/metrics.py
 from prometheus_client import Gauge, generate_latest
 from .models import Booking, Fine
 

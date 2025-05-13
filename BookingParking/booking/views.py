@@ -27,20 +27,20 @@ def home(request):
     if request.user.is_authenticated:
 
         parkings = ParkingZone.objects.filter(is_visible=True).annotate(avg_rating=Avg('reviews__rating'))
-        active_bookings = Booking.objects.select_related('parkingzone').prefetch_related('fines').filter(
-            user=request.user,
-            status__in=['active', 'inside', 'overdue']
-        ).order_by('-start_datetime')
+        active_bookings = (
+            Booking.objects.select_related("parkingzone")
+            .prefetch_related("fines")
+            .filter(user=request.user, status__in=["active", "inside", "overdue"])
+            .order_by("-start_datetime")
+        )
 
-        finished_bookings = Booking.objects.select_related('parkingzone').prefetch_related('fines').filter(
-            user=request.user,
-            status='finished'
-        ).order_by('-start_datetime')
-        return render(request, 'booking/home_authenticated.html', {
-            'parkings': parkings,
-            'active_bookings': active_bookings,
-            'now': timezone.now(),
-        })
+        return render(request,"booking/home_authenticated.html",
+            {
+                "parkings": parkings,
+                "active_bookings": active_bookings,
+                "now": timezone.now(),
+            },
+        )
     else:
         return render(request, 'booking/home_unauthenticated.html')
 
@@ -127,17 +127,15 @@ def pay_penalty(request, booking_id):
         return redirect('booking:profile')
 
     if request.method == 'POST':
-        # Оплачиваем все неоплаченные штрафы
         unpaid_fines = booking.fines.filter(is_paid=False)
         for fine in unpaid_fines:
             fine.is_paid = True
             fine.save()
 
-        booking.penalty = 0
-        booking.status = 'inside'
-
         extension = calculate_extension_duration(booking)
         booking.end_datetime += extension
+        booking.penalty = 0
+        booking.status = 'inside'
         booking.save()
 
         user = request.user
@@ -181,76 +179,100 @@ def user_fines(request):
 
     fines = Booking.objects.filter(user=request.user, penalty__gt=0).order_by('-start_datetime')
     return render(request, 'booking/user_fines.html', {'fines': fines})
-
+def create_fine(booking: Booking, amount: float, reason: str) -> None:
+    if amount <= 0:
+        return
+    has_active_fine = booking.fines.filter(is_paid=False).exists()
+    if not has_active_fine:
+        Fine.objects.create(
+            booking=booking,
+            amount=amount,
+            reason=reason,
+            is_paid=False,
+        )
 @login_required
 def profile_view(request):
     user = request.user
     now = timezone.now()
 
-    bookings_to_check = Booking.objects.filter(user=user, status__in=['active', 'inside'])
+    bookings_to_check = Booking.objects.filter(user=user, status__in=["active", "inside"])
     for booking in bookings_to_check:
-        if booking.status == 'active' and now > booking.end_datetime:
-            booking.status = 'finished'
-            booking.save()
-            messages.info(request,f"Бронь {booking.reservation_code} завершена, так как вы не воспользовались парковкой.")
+        if booking.status == "active" and now > booking.end_datetime:
+            booking.status = "finished"
+            booking.save(update_fields=["status"])
+            messages.info(
+                request,
+                f"Бронь {booking.reservation_code} завершена, так как вы не воспользовались парковкой.",
+            )
             continue
-        if booking.status == 'inside' and now > booking.end_datetime:
+
+        if booking.status == "inside" and now > booking.end_datetime:
             overdue_seconds = (now - booking.end_datetime).total_seconds()
             if overdue_seconds <= 10 * 60:
-                booking.status = 'overdue'
+                booking.status = "overdue"
                 booking.penalty = calculate_penalty(booking)
-                booking.save()
-                if not Fine.objects.filter(booking=booking).exists() and booking.penalty > 0:
-                    Fine.objects.create(
-                        booking=booking,
-                        amount=booking.penalty,
-                        reason="Просрочка менее 10 минут"
-                    )
-                messages.warning(request,f"Время брони {booking.reservation_code} истекло. Оплатите штраф, чтобы продлить бронь на 10 минут.")
+                booking.save(update_fields=["status", "penalty"])
+                create_fine(
+                    booking,
+                    booking.penalty,
+                    reason="Просрочка менее 10 минут",
+                )
+                messages.warning(
+                    request,
+                    f"Время брони {booking.reservation_code} истекло. "
+                    "Оплатите штраф, чтобы продлить бронь на 10 минут.",
+                )
             elif overdue_seconds <= 40 * 60:
                 booking.end_datetime += timedelta(minutes=30)
-                booking.status = 'inside'
-                booking.penalty = 0
-                booking.save()
-                messages.info(request, f"Бронь {booking.reservation_code} продлена на 30 минут из-за просрочки.")
-
+                booking.save(update_fields=["end_datetime"])
+                messages.info(
+                    request,
+                    f"Бронь {booking.reservation_code} продлена на 30 минут из‑за просрочки.",
+                )
             else:
                 penalty = calculate_penalty(booking)
-                booking.status = 'overdue'
+                booking.status = "overdue"
                 booking.penalty = penalty
                 booking.user.is_blocked = True
-                booking.user.save()
-                booking.save()
-                if not Fine.objects.filter(booking=booking).exists() and booking.penalty > 0:
-                    Fine.objects.create(
-                        booking=booking,
-                        amount=booking.penalty,
-                        reason="Просрочка более 40 минут"
-                    )
+                booking.user.save(update_fields=["is_blocked"])
+                booking.save(update_fields=["status", "penalty"])
+                create_fine(
+                    booking,
+                    penalty,
+                    reason="Просрочка более 40 минут",
+                )
+                messages.error(
+                    request,
+                    f"Бронь {booking.reservation_code} просрочена. Начислен штраф: {penalty} руб.",
+                )
+    active_bookings = (
+        Booking.objects.filter(user=user, status__in=["active", "inside", "overdue"])
+        .order_by("-start_datetime")
+    )
+    finished_bookings = (
+        Booking.objects.filter(user=user, status="finished").order_by("-start_datetime")
+    )
+    fines = Fine.objects.filter(booking__user=user).order_by("-issued_at")
+    total_fines = (
+        Fine.objects.filter(booking__user=user, is_paid=False).aggregate(Sum("amount"))["amount__sum"]
+        or 0
+    )
 
-                messages.error(request, f"Бронь {booking.reservation_code} просрочена. Начислен штраф: {penalty} руб.")
+    return render(
+        request,
+        "booking/profile.html",
+        {
+            "active_bookings": active_bookings,
+            "finished_bookings": finished_bookings,
+            "fines": fines,
+            "now": now,
+            "total_fines": total_fines,
+            "YANDEX_API_KEY": settings.YANDEX_API_KEY,
+        },
+    )
 
-    active_bookings = Booking.objects.filter(
-        user=user,
-        status__in=['active', 'inside', 'overdue']
-    ).order_by('-start_datetime')
 
-    finished_bookings = Booking.objects.filter(
-        user=user,
-        status='finished'
-    ).order_by('-start_datetime')
 
-    fines = Fine.objects.filter(booking__user=user).order_by('-issued_at')
-    total_fines = Fine.objects.filter(booking__user=user).aggregate(Sum('amount'))['amount__sum'] or 0
-
-    return render(request, 'booking/profile.html', {
-        'active_bookings': active_bookings,
-        'finished_bookings': finished_bookings,
-        'fines': fines,
-        'now': now,
-        'total_fines': total_fines,
-        'YANDEX_API_KEY': settings.YANDEX_API_KEY
-    })
 def mark_overdue_bookings():
     now = timezone.now()
     overdue_bookings = Booking.objects.filter(status='inside', end_datetime__lt=now)
@@ -417,6 +439,22 @@ def booking_success(request, booking_id):
         'booking': booking,
         'now': now
     })
+
+def calculate_penalty(booking: Booking) -> float:
+    now = timezone.now()
+    overdue_seconds = (now - booking.end_datetime).total_seconds()
+    if overdue_seconds <= 0:
+        return 0.0
+    overdue_minutes = overdue_seconds / 60.0
+    tariff_per_hour = float(booking.parkingzone.tariff_per_hour)
+    if overdue_minutes <= 10:
+        penalty = (10 / 60.0) * tariff_per_hour
+    elif overdue_minutes <= 30:
+        penalty = (30 / 60.0) * tariff_per_hour
+    else:
+        penalty = (overdue_seconds / 3600.0) * tariff_per_hour
+    return round(penalty, 2)
+
 def calculate_extension_duration(booking):
     now = timezone.now()
     overdue_seconds = (now - booking.end_datetime).total_seconds()
@@ -427,59 +465,46 @@ def calculate_extension_duration(booking):
     else:
         hours = int((overdue_seconds + 3599) // 3600)
         return timedelta(hours=hours)
-        return timedelta(hours=hours)
-def calculate_penalty(booking):
-    from django.utils import timezone
-    now = timezone.now()
-    overdue_seconds = (now - booking.end_datetime).total_seconds()
-    if overdue_seconds <= 0:
-        return 0
-    overdue_minutes = overdue_seconds / 60.0
-    tariff = float(booking.parkingzone.tariff_per_hour)
-    if overdue_minutes <= 10:
-        penalty = (10/60.0) * tariff
-    elif overdue_minutes <= 30:
-        penalty = (30/60.0) * tariff
-    else:
-        overdue_hours = overdue_seconds / 3600.0
-        penalty = tariff * overdue_hours
-    return round(penalty, 2)
 
+def apply_overdue_penalty(booking: Booking, reason: str = "Просрочка") -> None:
+    penalty = calculate_penalty(booking)
+    booking.status = "overdue"
+    booking.penalty = penalty
+    booking.save(update_fields=["status", "penalty"])
+    Fine.objects.update_or_create(
+        booking=booking,
+        is_paid=False,
+        defaults={"amount": penalty, "reason": reason},
+    )
 
 @login_required
 def open_barrier(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     now = timezone.now()
-
     if booking.status != 'active':
         messages.error(request, "Бронь не активна или уже использована.")
         return redirect('booking:profile')
-
     if now > booking.end_datetime:
         booking.status = 'finished'
         booking.save()
         messages.error(request, "Срок бронирования истёк. Бронь завершена.")
         return redirect('booking:profile')
-
     barrier_ip = booking.parkingzone.barrier_ip
     if not barrier_ip:
         messages.error(request, "IP-адрес шлагбаума не указан для этой парковки.")
         return redirect('booking:profile')
+    esp_url = f"http://{barrier_ip}/servo"
 
-    fastapi_url = f"http://{barrier_ip}/servo"
     try:
-        response = requests.post(fastapi_url, json={"status": 0}, timeout=5)
+        response = requests.post(esp_url, json={"status": 0}, timeout=5)
         response.raise_for_status()
     except requests.RequestException as e:
-        messages.error(request, "Шлагбаум сейчас недоступен. Обратитесь к администратору.")
+        messages.error(request, f"Шлагбаум сейчас недоступен. Обратитесь к администратору. {e}")
         return redirect('booking:profile')
-
     booking.status = 'inside'
-    booking.save()
+    booking.save(update_fields=["status"])
     messages.success(request, "Шлагбаум открыт.")
     return redirect('booking:profile')
-
-
 
 @login_required
 def check_booking_status(request):
@@ -502,25 +527,34 @@ def check_booking_status(request):
 def leave_parking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     now = timezone.now()
-    if booking.status == 'overdue' and booking.penalty > 0:
+
+    if booking.status == "inside" and now > booking.end_datetime:
+        apply_overdue_penalty(booking, "Просрочка при попытке выезда")
+
+    if booking.status == "overdue" and booking.has_unpaid_fines():
         messages.error(request, "У вас есть неоплаченный штраф. Оплатите штраф, чтобы покинуть парковку.")
-        return redirect('booking:pay_penalty', booking_id=booking.id)
-    if booking.status != 'inside' and not (booking.status == 'overdue' and booking.penalty == 0):
+        return redirect("booking:pay_penalty", booking_id=booking.id)
+
+    if booking.status not in ["inside", "overdue"]:
         messages.error(request, "Вы не на парковке или статус бронирования неверен.")
-        return redirect('booking:profile')
+        return redirect("booking:profile")
+
     barrier_ip = booking.parkingzone.barrier_ip
     if not barrier_ip:
         messages.error(request, "IP-адрес шлагбаума не указан для этой парковки.")
-        return redirect('booking:profile')
-    fastapi_url = f"http://{barrier_ip}/servo"
+        return redirect("booking:profile")
+
+    esp_url = f"http://{barrier_ip}/servo"
+
     try:
-        response = requests.post(fastapi_url, json={"status": 0}, timeout=5)
+        response = requests.post(esp_url, json={"status": 0}, timeout=5)
         response.raise_for_status()
     except requests.RequestException as e:
-        messages.error(request, "Шлагбаум сейчас недоступен. Обратитесь к администратору.")
-        return redirect('booking:profile')
-    booking.status = 'finished'
-    booking.save()
+        messages.error(request, f"Шлагбаум сейчас недоступен. Обратитесь к администратору. {e}")
+        return redirect("booking:profile")
+
+    booking.status = "finished"
+    booking.save(update_fields=["status"])
     messages.success(request, "Вы успешно покинули парковку.")
     return redirect('booking:profile')
 
@@ -529,26 +563,22 @@ def confirm_exit(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     now = timezone.now()
 
-    if booking.status == 'inside' and now > booking.end_datetime:
+    if booking.status == "inside" and now > booking.end_datetime:
         overdue_seconds = (now - booking.end_datetime).total_seconds()
         if overdue_seconds <= 10 * 60:
-            booking.status = 'overdue'
-            booking.penalty = calculate_penalty(booking)
-            booking.save()
+            apply_overdue_penalty(booking, "Просрочка менее 10 минут")
         elif overdue_seconds <= 40 * 60:
             booking.end_datetime += timedelta(minutes=30)
-            booking.status = 'inside'
-            booking.penalty = 0
-            booking.save()
+            booking.save(update_fields=["end_datetime"])
         else:
-            booking.status = 'overdue'
-            booking.penalty = calculate_penalty(booking)
+            apply_overdue_penalty(booking, "Просрочка более 40 минут")
             booking.user.is_blocked = True
             booking.user.save()
-            booking.save()
 
-    if booking.status == 'overdue' and booking.penalty > 0:
-        return redirect('booking:pay_penalty', booking_id=booking.id)
+    if booking.status == "overdue" and booking.penalty > 0:
+        return redirect("booking:pay_penalty", booking_id=booking.id)
+
+    return render(request, "booking/confirm_exit.html", {"booking": booking})
 
     return render(request, 'booking/confirm_exit.html', {'booking': booking})
 

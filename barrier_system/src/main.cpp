@@ -42,7 +42,7 @@ void showTestFlash() {
 void handleOptions() {
   server.send(200, "application/json", "{\"message\": \"OK\"}");
   showTestFlash();
-
+  return;
 }
 void handleControl() {
   if (server.method() != HTTP_POST) {
@@ -74,6 +74,7 @@ void handleControl() {
     manualOpen = false;
     server.send(200, "application/json", "{\"message\": \"Открыт на 15 сек\"}");
     Serial.println("Шлагбаум открыт на 15 секунд");
+    return;
   }
 
   else if (command == 1) {  
@@ -88,6 +89,7 @@ void handleControl() {
     manualOpen = true;
     server.send(200, "application/json", "{\"message\": \"Открыт вручную\"}");
     Serial.println("Шлагбаум открыт вручную");
+    return;
   }
 
   else if (command == 2) {  
@@ -102,10 +104,12 @@ void handleControl() {
     manualOpen = false;
     server.send(200, "application/json", "{\"message\": \"Закрыт вручную\"}");
     Serial.println("Шлагбаум закрыт вручную");
+    return;
   }
 
   else {
     server.send(400, "application/json", "{\"message\": \"Неверная команда\"}");
+    return;
   }
 }
 

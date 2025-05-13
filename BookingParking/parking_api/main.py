@@ -3,19 +3,24 @@ from pydantic import BaseModel
 import httpx
 
 app = FastAPI()
-ESP32_URL = "http://192.168.1.8/control"
 
 class ServoCommand(BaseModel):
     status: int
+    ip: str
 
 @app.post("/servo")
 async def control_servo(command: ServoCommand):
-    if command.status not in [0, 1]:
+    if command.status not in [0, 1, 2]:
         raise HTTPException(status_code=400, detail="Неверная команда")
+    target_url = f"http://{command.ip}/servo"
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(ESP32_URL, json={"status": command.status})
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(target_url, json={"status": command.status})
             response.raise_for_status()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка отправки команды на устройство: {e}")
-    return {"message": "Команда отправлена успешно"}
+            text = response.text
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка подключения к ESP: {e}")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=500, detail=f"ESP вернул ошибку: {e.response.status_code}")
+
+    return {"message": "Команда отправлена успешно", "esp_response": text}
