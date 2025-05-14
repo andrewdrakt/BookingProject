@@ -37,6 +37,11 @@ class VerificationForm(forms.Form):
         label="Тип аккаунта",
         widget=forms.Select(attrs={'id': 'id_account_type'})
     )
+    phone_number = forms.CharField(
+        required=True,
+        label="Номер телефона",
+        widget=forms.TextInput(attrs={'placeholder': 'Номер телефона'})
+    )
     passport_data = forms.CharField(
         required=False,
         label="Паспортные данные",
@@ -64,45 +69,6 @@ class VerificationForm(forms.Form):
             if not cleaned_data.get('inn'):
                 self.add_error('inn', "Необходимо указать ИНН.")
         return cleaned_data
-
-    class VerificationForm(forms.Form):
-        account_type = forms.ChoiceField(
-            choices=[('individual', 'Частное лицо'), ('company', 'Компания')],
-            label="Тип аккаунта",
-            widget=forms.Select(attrs={'id': 'id_account_type'})
-        )
-        phone_number = forms.CharField(
-            required=True,
-            label="Номер телефона",
-            widget=forms.TextInput(attrs={'placeholder': 'Номер телефона'})
-        )
-        passport_data = forms.CharField(
-            required=False,
-            label="Паспортные данные",
-            widget=forms.TextInput(attrs={'placeholder': 'Серия и номер паспорта'})
-        )
-        company_name = forms.CharField(
-            required=False,
-            label="Название компании"
-        )
-        inn = forms.CharField(
-            required=False,
-            label="ИНН компании"
-        )
-
-        def clean(self):
-            cleaned_data = super().clean()
-            account_type = cleaned_data.get('account_type')
-
-            if account_type == 'individual':
-                if not cleaned_data.get('passport_data'):
-                    self.add_error('passport_data', "Необходимо указать паспортные данные.")
-            elif account_type == 'company':
-                if not cleaned_data.get('company_name'):
-                    self.add_error('company_name', "Необходимо указать название компании.")
-                if not cleaned_data.get('inn'):
-                    self.add_error('inn', "Необходимо указать ИНН.")
-            return cleaned_data
 
 class ReviewForm(forms.ModelForm):
     class Meta:
