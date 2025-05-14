@@ -49,22 +49,26 @@ def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            password = form.cleaned_data['password']
-            user.set_password(password)
-            user.is_active = False
-            user.save()
-            token = str(uuid.uuid4())
-            confirmation_link = request.build_absolute_uri(
-                reverse('booking:confirm_email', args=[user.id, token])
-            )
-            send_mail(
-                'Подтверждение регистрации',
-                f'Для подтверждения регистрации перейдите по ссылке: {confirmation_link}',
-                settings.EMAIL_HOST_USER,
-                [user.email],
-                fail_silently=False,
-            )
+            try:
+                user = form.save(commit=False)
+                password = form.cleaned_data['password']
+                user.set_password(password)
+                user.is_active = False
+                user.save()
+                token = str(uuid.uuid4())
+                confirmation_link = request.build_absolute_uri(
+                    reverse('booking:confirm_email', args=[user.id, token])
+                )
+                send_mail(
+                    'Подтверждение регистрации',
+                    f'Для подтверждения регистрации перейдите по ссылке: {confirmation_link}',
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(f"Ошибка регистрации: {e}")
+                messages.error(request, "Произошла ошибка при регистрации.")
             return render(request, 'booking/register.html', {
                 'form': form,
                 'message': 'Регистрация прошла успешно. Проверьте почту для подтверждения регистрации.'

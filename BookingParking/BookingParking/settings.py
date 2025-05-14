@@ -21,7 +21,7 @@ SECRET_KEY = config('SECRET_KEY')
 ENCRYPTION_KEY = config('ENCRYPTION_KEY').encode()
 YANDEX_API_KEY = config('YANDEX_API_KEY')
 ADMIN_EMAIL=config('ADMIN_EMAIL')
-FASTAPI_URL = "http://127.0.0.1:8000"
+FASTAPI_URL = "http://fastapi:8000"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -98,7 +98,7 @@ DATABASES = {
         'NAME': 'booking',
         'USER': 'postgres',
         'PASSWORD': '123456',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432',
         'OPTIONS': {
             'client_encoding': 'UTF8',
