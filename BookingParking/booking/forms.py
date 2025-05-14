@@ -31,6 +31,7 @@ class ParkingZoneEditForm(forms.ModelForm):
         fields = ['name', 'address', 'latitude', 'longitude', 'total_places', 'tariff_per_hour', 'barrier_ip', 'photo']
 
 
+
 class VerificationForm(forms.Form):
     account_type = forms.ChoiceField(
         choices=[('individual', 'Частное лицо'), ('company', 'Компания')],
