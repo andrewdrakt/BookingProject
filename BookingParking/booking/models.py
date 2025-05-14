@@ -33,10 +33,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('individual', 'Частное лицо'),
         ('company', 'Компания'),
     )
-    phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Номер телефона")
-    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPE_CHOICES, blank=True, null=True, verbose_name="Тип аккаунта")
+    phone_number = models.CharField(max_length=255, blank=True, null=True, verbose_name="Номер телефона")
+    account_type = models.CharField(max_length=255, choices=ACCOUNT_TYPE_CHOICES, blank=True, null=True, verbose_name="Тип аккаунта")
     company_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Название компании")
-    inn = models.CharField(max_length=20, blank=True, null=True, verbose_name="ИНН компании")
+    inn = models.CharField(max_length=255, blank=True, null=True, verbose_name="ИНН компании")
 
     objects = UserManager()
 
