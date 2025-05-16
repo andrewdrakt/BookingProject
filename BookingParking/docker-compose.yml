@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql:ro
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - appnet
+
+  django:
+    build: .
+    container_name: booking_django
+    command: ["bash", "/app/entrypoint.sh"]
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    networks:
+      - appnet
+
+  fastapi:
+    build: ./parking_api
+    container_name: parking_api
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./parking_api:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - appnet
+
+volumes:
+  postgres_data:
+
+networks:
+  appnet:
+    driver: bridge
