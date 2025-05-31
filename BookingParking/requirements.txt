@@ -1,0 +1,9 @@
+Django>=5.1
+psycopg2-binary
+python-decouple
+cryptography
+prometheus_client
+djangorestframework
+django-widget-tweaks
+requests
+Pillow

@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('register/', views.register, name='register'),
     path('confirm_email/<int:user_id>/<str:token>/', views.confirm_email, name='confirm_email'),
+    path('registration/done/', views.registration_done, name='registration_done'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     path('parking/<int:parking_id>/', views.parking_detail, name='parking_detail'),
@@ -51,4 +52,5 @@ urlpatterns = [
     path('profile/my-parking/<int:pk>/edit/', views.edit_parking_zone, name='edit_parking_zone'),
     path('profile/my-parking/<int:pk>/show/', views.show_parking_zone, name='show_parking_zone'),
     path('check-availability/<int:parking_id>/', views.check_availability, name='check_availability'),
+    path('servo/', views.servo_control, name='servo_control'),
 ]

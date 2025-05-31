@@ -23,6 +23,9 @@ from .forms import RegistrationForm, LoginForm
 from .models import User, ParkingZone, Booking, Fine, Review
 from booking.services.encryption import encrypt_data
 from django.db.models import Avg
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 def home(request):
     if request.user.is_authenticated:
 
@@ -44,31 +47,43 @@ def home(request):
     else:
         return render(request, 'booking/home_unauthenticated.html')
 
+@csrf_exempt
+def servo_control(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            status = data.get("status")
+            return JsonResponse({"message": f"Получено: {status}"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"message": "Метод не поддерживается"}, status=405)
 
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            password = form.cleaned_data['password']
-            user.set_password(password)
-            user.is_active = False
-            user.save()
-            token = str(uuid.uuid4())
-            confirmation_link = request.build_absolute_uri(
-                reverse('booking:confirm_email', args=[user.id, token])
-            )
-            send_mail(
-                'Подтверждение регистрации',
-                f'Для подтверждения регистрации перейдите по ссылке: {confirmation_link}',
-                settings.EMAIL_HOST_USER,
-                [user.email],
-                fail_silently=False,
-            )
-            return render(request, 'booking/register.html', {
-                'form': form,
-                'message': 'Регистрация прошла успешно. Проверьте почту для подтверждения регистрации.'
-            })
+            try:
+                user = form.save(commit=False)
+                password = form.cleaned_data['password']
+                user.set_password(password)
+                user.is_active = False
+                user.save()
+                token = str(uuid.uuid4())
+                confirmation_link = request.build_absolute_uri(
+                    reverse('booking:confirm_email', args=[user.id, token])
+                )
+                send_mail(
+                    'Подтверждение регистрации',
+                    f'Для подтверждения регистрации перейдите по ссылке: {confirmation_link}',
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(f"Ошибка регистрации: {e}")
+                messages.error(request, "Произошла ошибка при регистрации.")
+            messages.success(request, 'Регистрация прошла успешно. Проверьте почту для подтверждения.')
+            return redirect('booking:registration_done')
     else:
         form = RegistrationForm()
     return render(request, 'booking/register.html', {'form': form})
@@ -80,12 +95,22 @@ def confirm_email(request, user_id, token):
     login(request, user)
     return redirect('booking:profile')
 
+def registration_done(request):
+    return render(request, 'booking/registration_done.html')
+
 def user_login(request):
+    if request.user.is_authenticated:
+        return redirect('booking:home')
+    form = LoginForm(request, data=request.POST if request.method == 'POST' else None)
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            if not user.is_active:
+                messages.error(request, "Вы не подтвердили почту. Проверьте email для активации аккаунта.")
+                return redirect('booking:login')
             login(request, user)
+            rotate_token(request)
             return redirect('booking:home')
     else:
         form = LoginForm()

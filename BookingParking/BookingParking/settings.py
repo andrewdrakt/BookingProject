@@ -21,7 +21,7 @@ SECRET_KEY = config('SECRET_KEY')
 ENCRYPTION_KEY = config('ENCRYPTION_KEY').encode()
 YANDEX_API_KEY = config('YANDEX_API_KEY')
 ADMIN_EMAIL=config('ADMIN_EMAIL')
-FASTAPI_URL = "http://127.0.0.1:8000"
+FASTAPI_URL = "http://fastapi:8000"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -95,11 +95,11 @@ WSGI_APPLICATION = 'BookingParking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'booking',
-        'USER': 'postgres',
-        'PASSWORD': '123456',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
         'OPTIONS': {
             'client_encoding': 'UTF8',
         },
@@ -151,8 +151,19 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 AUTH_USER_MODEL = 'booking.User'
 
-CSRF_TRUSTED_ORIGINS = [
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
+CSRF_COOKIE_DOMAIN = "parkingbooking.online"
+SESSION_COOKIE_DOMAIN = "parkingbooking.online"
+
+CSRF_TRUSTED_ORIGINS = [
+'https://parkingbooking.online:8443',
+'https://parkingbooking.online',
+]
+
+ALLOWED_HOSTS = ['parkingbooking.online',
+'www.parkingbooking.online',
 ]
 
 # Default primary key field type
