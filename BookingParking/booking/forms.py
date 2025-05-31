@@ -14,12 +14,22 @@ class RegistrationForm(forms.ModelForm):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
+        if password and len(password) < 6:
+            self.add_error('password', "Пароль должен быть не менее 6 символов.")
         if password and confirm_password and password != confirm_password:
             self.add_error('confirm_password', "Пароли не совпадают")
         return cleaned_data
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("На эту почту уже зарегистрирован аккаунт.")
+        return email
 
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'autofocus': True}), label="Email")
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            raise ValidationError("Вы ещё не подтвердили почту. Проверьте email и перейдите по ссылке для активации.", code='inactive')
 
 class ParkingZoneForm(forms.ModelForm):
     class Meta:
