@@ -58,6 +58,7 @@ class ParkingZone(models.Model):
     photo = models.ImageField(upload_to='parking_photos/', null=True, blank=True, verbose_name="Фото парковки")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Владелец парковки")
     is_visible = models.BooleanField(default=True, verbose_name="Отображать парковку на сайте")
+    barrier_mac = models.CharField(max_length=32, null=True, blank=True)
 
     def __str__(self):
         return self.name

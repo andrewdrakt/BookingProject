@@ -1,11 +1,14 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.http import JsonResponse
 app_name = 'booking'
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('register/', views.register, name='register'),
+    path("api/test/", lambda r: JsonResponse({"ok": True})),
+
     path('confirm_email/<int:user_id>/<str:token>/', views.confirm_email, name='confirm_email'),
     path('registration/done/', views.registration_done, name='registration_done'),
     path('login/', views.user_login, name='login'),
@@ -53,6 +56,7 @@ urlpatterns = [
     path('profile/my-parking/<int:pk>/show/', views.show_parking_zone, name='show_parking_zone'),
     path('check-availability/<int:parking_id>/', views.check_availability, name='check_availability'),
     path('servo/', views.servo_control, name='servo_control'),
-    path('api/commands', views.get_device_command, name='get_device_command'),
-    path('api/commands/send', views.send_device_command, name='send_device_command'),
+    path('api/commands/', views.get_device_command, name='get_device_command'),
+    path('api/commands/send/', views.send_device_command, name='send_device_command'),
 ]
+

@@ -52,7 +52,10 @@
               <input type="text" name="barrier_ip" id="id_barrier_ip" required pattern="...">
               {% for error in form.barrier_ip.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
             </div>
-
+<div class="mb-3">
+  <label for="id_barrier_mac" class="form-label">MAC ESP (например, 84:F3:EB:12:34:56)</label>
+  <input type="text" name="barrier_mac" id="id_barrier_mac" class="form-control" placeholder="MAC ESP">
+</div>
             <div class="mb-3 form-check">
               <input type="checkbox" name="is_available" id="id_is_available" class="form-check-input" {% if form.is_available.value or form.is_available.value is None %}checked{% endif %}>
               <label for="id_is_available" class="form-check-label">Доступна для бронирования</label>

@@ -12,6 +12,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from booking.services.encryption import decrypt_data
 from django.contrib.admin import SimpleListFilter
+from .models import DeviceCommand
 def display_passport_data(obj):
     try:
         return decrypt_data(obj.passport_data)
@@ -100,10 +101,10 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(ParkingZone)
 class ParkingZoneAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'display_owner', 'barrier_ip', 'barrier_control')
+    list_display = ('name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'display_owner', 'barrier_ip', 'barrier_mac', 'barrier_control')
     list_filter = ('is_available',)
     search_fields = ('name', 'address')
-    fields = ('name', 'address', 'latitude', 'longitude', 'barrier_ip', 'total_places', 'tariff_per_hour', 'photo', 'is_available', 'owner')
+    fields = ('name', 'address', 'latitude', 'longitude', 'barrier_ip', 'barrier_mac', 'total_places', 'tariff_per_hour', 'photo', 'is_available', 'owner')
     autocomplete_fields = ('owner',)
 
     class Media:
@@ -155,17 +156,12 @@ class ParkingZoneAdmin(admin.ModelAdmin):
 
     def _send_command(self, status_code, pk, action_name, request):
         zone = ParkingZone.objects.get(pk=pk)
-        if not zone.barrier_ip:
-            messages.error(request, f"У парковки {zone.name} не указан IP шлагбаума.")
+        if not zone.barrier_mac:
+            messages.error(request, f"У парковки {zone.name} не указан MAC ESP.")
             return redirect(request.META.get('HTTP_REFERER', '/admin/'))
 
-        fastapi_url = f"http://{zone.barrier_ip}/servo"
-        try:
-            response = requests.post(fastapi_url, json={"status": status_code}, timeout=5)
-            response.raise_for_status()
-            messages.success(request, f"{action_name} → {zone.name}: УСПЕХ")
-        except requests.RequestException as e:
-            messages.error(request, f"{action_name} → {zone.name}: !!! Ошибка: {e}")
+        DeviceCommand.objects.create(device_id=zone.barrier_mac, status=status_code)
+        messages.success(request, f"{action_name} → {zone.name}: Команда сохранена")
         return redirect(request.META.get('HTTP_REFERER', '/admin/'))
 
     def manual_open(self, request, pk):

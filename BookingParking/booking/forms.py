@@ -34,14 +34,14 @@ class LoginForm(AuthenticationForm):
 class ParkingZoneForm(forms.ModelForm):
     class Meta:
         model = ParkingZone
-        fields = ['name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'photo']
+        fields = ['name', 'address', 'total_places', 'tariff_per_hour', 'is_available', 'photo','barrier_mac']
 class ParkingZoneEditForm(forms.ModelForm):
     class Meta:
         model = ParkingZone
         fields = [
             'name', 'address', 'latitude', 'longitude',
             'total_places', 'tariff_per_hour', 'barrier_ip',
-            'is_available', 'photo'
+            'is_available', 'barrier_mac', 'photo'
         ]
 
 class VerificationForm(forms.Form):

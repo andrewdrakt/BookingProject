@@ -513,18 +513,16 @@ def open_barrier(request, booking_id):
         booking.save()
         messages.error(request, "Срок бронирования истёк. Бронь завершена.")
         return redirect('booking:profile')
-    barrier_ip = booking.parkingzone.barrier_ip
-    if not barrier_ip:
-        messages.error(request, "IP-адрес шлагбаума не указан для этой парковки.")
+    mac = booking.parkingzone.barrier_mac
+    if not mac:
+        messages.error(request, "MAC-адрес ESP не указан для этой парковки.")
         return redirect('booking:profile')
-    esp_url = f"http://{barrier_ip}/servo"
+    mac = ":".join(mac[i:i+2] for i in range(0, 12, 2)).upper()
+    DeviceCommand.objects.create(
+        device_id=mac,
+        status=0
+    )
 
-    try:
-        response = requests.post(esp_url, json={"status": 0}, timeout=5)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        messages.error(request, f"Шлагбаум сейчас недоступен. Обратитесь к администратору. {e}")
-        return redirect('booking:profile')
     booking.status = 'inside'
     booking.save(update_fields=["status"])
     messages.success(request, "Шлагбаум открыт.")
@@ -563,24 +561,17 @@ def leave_parking(request, booking_id):
         messages.error(request, "Вы не на парковке или статус бронирования неверен.")
         return redirect("booking:profile")
 
-    barrier_ip = booking.parkingzone.barrier_ip
-    if not barrier_ip:
-        messages.error(request, "IP-адрес шлагбаума не указан для этой парковки.")
+    mac = booking.parkingzone.barrier_mac
+    if not mac:
+        messages.error(request, "MAC ESP не указан для этой парковки.")
         return redirect("booking:profile")
-
-    esp_url = f"http://{barrier_ip}/servo"
-
-    try:
-        response = requests.post(esp_url, json={"status": 0}, timeout=5)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        messages.error(request, f"Шлагбаум сейчас недоступен. Обратитесь к администратору. {e}")
-        return redirect("booking:profile")
+    mac = ":".join(mac[i:i+2] for i in range(0, 12, 2)).upper()
+    DeviceCommand.objects.create(device_id=mac, status=0)
 
     booking.status = "finished"
     booking.save(update_fields=["status"])
-    messages.success(request, "Вы успешно покинули парковку.")
-    return redirect('booking:profile')
+    messages.success(request, "Команда отправлена. Выезд разрешён.")
+    return redirect("booking:profile")
 
 @login_required
 def confirm_exit(request, booking_id):
@@ -797,12 +788,14 @@ def get_device_command(request):
     if not device_id:
         return JsonResponse({"error": "device_id обязателен"}, status=400)
 
+    device_id = ":".join(device_id[i:i+2] for i in range(0, 12, 2)).upper()
     cmd = DeviceCommand.objects.filter(device_id=device_id).order_by("-created_at").first()
     if not cmd:
         return JsonResponse({}, status=204)
 
     response = {"status": cmd.status}
     cmd.delete()
+    print(f"Получен GET от устройства: {device_id}")
     return JsonResponse(response)
 
 
@@ -816,7 +809,7 @@ def send_device_command(request):
 
         if not device_id or status not in [0, 1, 2]:
             return JsonResponse({"error": "Некорректные данные"}, status=400)
-
+        device_id = ":".join(device_id[i:i+2] for i in range(0, 12, 2)).upper()
         DeviceCommand.objects.create(device_id=device_id, status=status)
         return JsonResponse({"message": "Команда сохранена"})
     except Exception as e:

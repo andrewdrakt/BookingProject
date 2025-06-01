@@ -48,7 +48,10 @@
           <label for="{{ form.barrier_ip.id_for_label }}" class="form-label">IP шлагбаума</label>
           {{ form.barrier_ip|add_class:"form-control" }}
         </div>
-
+<div class="mb-3">
+  <label for="{{ form.barrier_mac.id_for_label }}" class="form-label">MAC ESP</label>
+  {{ form.barrier_mac|add_class:"form-control" }}
+</div>
         <div class="mb-3 form-check">
           {{ form.is_available|add_class:"form-check-input" }}
           <label class="form-check-label" for="{{ form.is_available.id_for_label }}">
