@@ -53,4 +53,6 @@ urlpatterns = [
     path('profile/my-parking/<int:pk>/show/', views.show_parking_zone, name='show_parking_zone'),
     path('check-availability/<int:parking_id>/', views.check_availability, name='check_availability'),
     path('servo/', views.servo_control, name='servo_control'),
+    path('api/commands', views.get_device_command, name='get_device_command'),
+    path('api/commands/send', views.send_device_command, name='send_device_command'),
 ]

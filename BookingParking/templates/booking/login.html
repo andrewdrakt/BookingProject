@@ -57,12 +57,4 @@
   color: #0c5460;
 }
 </style>
-<script>
-  if (!sessionStorage.getItem('loginRefreshed')) {
-    sessionStorage.setItem('loginRefreshed', 'true');
-    window.location.reload();
-  } else {
-    sessionStorage.removeItem('loginRefreshed');
-  }
-</script>
 {% endblock %}

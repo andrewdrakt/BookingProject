@@ -110,3 +110,11 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.rating}★ для {self.parking.name}"
+
+class DeviceCommand(models.Model):
+    device_id = models.CharField(max_length=32, db_index=True)
+    status = models.IntegerField(choices=[(0, "Открыть"), (1, "Открыть вручную"), (2, "Закрыть")])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.device_id} => {self.status}"

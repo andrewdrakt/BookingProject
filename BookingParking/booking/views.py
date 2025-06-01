@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import timedelta
 
 import requests
+from django.views.decorators.http import require_http_methods
+from .models import DeviceCommand
 from django.db.models import Sum
 from django.conf import settings
 from django.contrib import messages
@@ -99,19 +101,16 @@ def registration_done(request):
     return render(request, 'booking/registration_done.html')
 
 def user_login(request):
-    if request.user.is_authenticated:
-        return redirect('booking:home')
-    form = LoginForm(request, data=request.POST if request.method == 'POST' else None)
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if not user.is_active:
-                messages.error(request, "Вы не подтвердили почту. Проверьте email для активации аккаунта.")
-                return redirect('booking:login')
             login(request, user)
+            from django.middleware.csrf import rotate_token
             rotate_token(request)
             return redirect('booking:home')
+        else:
+            messages.error(request, "Неверный логин или пароль.")
     else:
         form = LoginForm()
     return render(request, 'booking/login.html', {'form': form})
@@ -734,18 +733,17 @@ def edit_parking_zone(request, pk):
             if not latitude or not longitude:
                 form.add_error(None, "Пожалуйста, укажите точку на карте.")
             else:
-                parking = form.save(commit=False)
                 try:
+                    parking = form.save(commit=False)
                     parking.latitude = float(latitude.replace(',', '.'))
                     parking.longitude = float(longitude.replace(',', '.'))
+                    if 'photo' in request.FILES:
+                        parking.photo = request.FILES['photo']
+                    parking.save()
+                    messages.success(request, "Парковка успешно обновлена.")
+                    return redirect('booking:my_parking_zones')
                 except ValueError:
-                    form.add_error(None, "Ошибка при сохранении координат.")
-                    return render(request, 'booking/edit_parking_zone.html', {'form': form})
-
-                parking.save()
-                messages.success(request, "Парковка успешно обновлена.")
-                return redirect('booking:my_parking_zones')
-
+                    form.add_error(None, "Некорректные координаты.")
     else:
         form = ParkingZoneEditForm(instance=parking)
 
@@ -792,3 +790,34 @@ def check_availability(request, parking_id):
         "available": available > 0,
         "available_places": max(0, available)
     })
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_device_command(request):
+    device_id = request.GET.get("device_id")
+    if not device_id:
+        return JsonResponse({"error": "device_id обязателен"}, status=400)
+
+    cmd = DeviceCommand.objects.filter(device_id=device_id).order_by("-created_at").first()
+    if not cmd:
+        return JsonResponse({}, status=204)
+
+    response = {"status": cmd.status}
+    cmd.delete()
+    return JsonResponse(response)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def send_device_command(request):
+    try:
+        data = json.loads(request.body)
+        device_id = data.get("device_id")
+        status = data.get("status")
+
+        if not device_id or status not in [0, 1, 2]:
+            return JsonResponse({"error": "Некорректные данные"}, status=400)
+
+        DeviceCommand.objects.create(device_id=device_id, status=status)
+        return JsonResponse({"message": "Команда сохранена"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

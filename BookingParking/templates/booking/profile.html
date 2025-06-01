@@ -217,30 +217,8 @@
     });
   }
 </script>
-    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey={{ YANDEX_API_KEY }}"></script>
-<script>
-  ymaps.ready(function () {
-    {% for booking in active_bookings %}
-      ymaps.geocode("{{ booking.parkingzone.address }}").then(function (res) {
-        const first = res.geoObjects.get(0);
-        if (!first) return;
+   
 
-        const coords = first.geometry.getCoordinates();
-        const map = new ymaps.Map("map-{{ booking.id }}", {
-          center: coords,
-          zoom: 16,
-          controls: ['zoomControl']
-        });
-
-        const placemark = new ymaps.Placemark(coords, {
-          balloonContent: "{{ booking.parkingzone.name }}"
-        });
-
-        map.geoObjects.add(placemark);
-      });
-    {% endfor %}
-  });
-</script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("searchInput");
@@ -351,4 +329,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
     
+{% endblock %}
+{% block mapscripts %}
+{{ block.super }}
+<script>
+  ymaps.ready(function () {
+    {% for booking in active_bookings %}
+      ymaps.geocode("{{ booking.parkingzone.address }}").then(function (res) {
+        const first = res.geoObjects.get(0);
+        if (!first) return;
+
+        const coords = first.geometry.getCoordinates();
+        const map = new ymaps.Map("map-{{ booking.id }}", {
+          center: coords,
+          zoom: 16,
+          controls: ['zoomControl']
+        });
+
+        const placemark = new ymaps.Placemark(coords, {
+          balloonContent: "{{ booking.parkingzone.name }}"
+        });
+
+        map.geoObjects.add(placemark);
+      });
+    {% endfor %}
+  });
+</script>
 {% endblock %}

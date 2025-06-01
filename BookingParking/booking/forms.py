@@ -38,8 +38,11 @@ class ParkingZoneForm(forms.ModelForm):
 class ParkingZoneEditForm(forms.ModelForm):
     class Meta:
         model = ParkingZone
-        fields = ['name', 'address', 'latitude', 'longitude', 'total_places', 'tariff_per_hour', 'barrier_ip', 'photo']
-
+        fields = [
+            'name', 'address', 'latitude', 'longitude',
+            'total_places', 'tariff_per_hour', 'barrier_ip',
+            'is_available', 'photo'
+        ]
 
 class VerificationForm(forms.Form):
     account_type = forms.ChoiceField(

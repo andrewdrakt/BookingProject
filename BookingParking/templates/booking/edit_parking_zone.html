@@ -3,7 +3,8 @@
 {% block title %}Редактировать парковку{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+
+   <div class="container py-4">
   <div class="card shadow rounded-4">
     <div class="card-body p-4">
       <h2 class="card-title mb-4 text-center">Редактировать парковку</h2>
@@ -11,18 +12,22 @@
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
 
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
         <div id="map" style="width: 100%; height: 300px;" class="mb-4 rounded shadow-sm border"></div>
 
-<input type="hidden" id="id_latitude" name="latitude"
-  value="{% if form.latitude.value %}{{ form.latitude.value|floatformat:6 }}{% else %}{{ form.instance.latitude|floatformat:6 }}{% endif %}">
+        <input type="hidden" id="id_latitude" name="latitude"
+          value="{{ form.latitude.value|default:form.instance.latitude|floatformat:6 }}">
 
-<input type="hidden" id="id_longitude" name="longitude"
-  value="{% if form.longitude.value %}{{ form.longitude.value|floatformat:6 }}{% else %}{{ form.instance.longitude|floatformat:6 }}{% endif %}">
+        <input type="hidden" id="id_longitude" name="longitude"
+          value="{{ form.longitude.value|default:form.instance.longitude|floatformat:6 }}">
 
         <div class="mb-3">
-       <label for="{{ form.address.id_for_label }}" class="form-label">Адрес парковки</label>
-  {{ form.address|add_class:"form-control" }}       
-       </div>
+          <label for="{{ form.address.id_for_label }}" class="form-label">Адрес парковки</label>
+          {{ form.address|add_class:"form-control" }}
+        </div>
 
         <div class="mb-3">
           <label for="{{ form.name.id_for_label }}" class="form-label">Название зоны</label>
@@ -40,8 +45,15 @@
         </div>
 
         <div class="mb-3">
-          <label for="id_barrier_ip" class="form-label">IP шлагбаума</label>
-          <input type="text" id="id_barrier_ip" name="barrier_ip" value="{{ form.instance.barrier_ip }}" class="form-control" required placeholder="например, 192.168.1.1">
+          <label for="{{ form.barrier_ip.id_for_label }}" class="form-label">IP шлагбаума</label>
+          {{ form.barrier_ip|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3 form-check">
+          {{ form.is_available|add_class:"form-check-input" }}
+          <label class="form-check-label" for="{{ form.is_available.id_for_label }}">
+            Парковка доступна для бронирования
+          </label>
         </div>
 
         <div class="mb-3">
