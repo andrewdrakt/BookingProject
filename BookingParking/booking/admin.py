@@ -146,7 +146,7 @@ class ParkingZoneAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path('manual-open-barrier/<int:pk>/', self.admin_site.admin_view(self.manual_open), name='manual-open'),
+            path('manualЗд-open-barrier/<int:pk>/', self.admin_site.admin_view(self.manual_open), name='manual-open'),
             path('timed-open-barrier/<int:pk>/', self.admin_site.admin_view(self.timed_open), name='timed-open'),
             path('close-barrier/<int:pk>/', self.admin_site.admin_view(self.force_close), name='force-close'),
             path('test-barrier/<int:pk>/', self.admin_site.admin_view(self.test_barrier), name='test-barrier'),

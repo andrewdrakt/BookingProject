@@ -18,6 +18,12 @@ class RegistrationForm(forms.ModelForm):
             self.add_error('confirm_password', "Пароли не совпадают")
         return cleaned_data
 
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("На эту почту уже зарегистрирован аккаунт.")
+        return email
+
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(widget=forms.EmailInput(attrs={'autofocus': True}), label="Email")
 

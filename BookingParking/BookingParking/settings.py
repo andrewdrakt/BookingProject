@@ -98,7 +98,7 @@ DATABASES = {
         'NAME': 'booking',
         'USER': 'postgres',
         'PASSWORD': '123456',
-        'HOST': 'db',
+        'HOST': 'localhost',
         'PORT': '5432',
         'OPTIONS': {
             'client_encoding': 'UTF8',

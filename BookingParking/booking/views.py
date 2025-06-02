@@ -23,6 +23,9 @@ from .forms import RegistrationForm, LoginForm
 from .models import User, ParkingZone, Booking, Fine, Review
 from booking.services.encryption import encrypt_data
 from django.db.models import Avg
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 def home(request):
     if request.user.is_authenticated:
 
@@ -43,6 +46,17 @@ def home(request):
         )
     else:
         return render(request, 'booking/home_unauthenticated.html')
+
+@csrf_exempt
+def servo_control(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            esp_ip = request.META.get('REMOTE_ADDR')
+            return JsonResponse({"status": 0})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"message": "Метод не поддерживается"}, status=405)
 
 
 def register(request):
@@ -69,10 +83,8 @@ def register(request):
             except Exception as e:
                 print(f"Ошибка регистрации: {e}")
                 messages.error(request, "Произошла ошибка при регистрации.")
-            return render(request, 'booking/register.html', {
-                'form': form,
-                'message': 'Регистрация прошла успешно. Проверьте почту для подтверждения регистрации.'
-            })
+            messages.success(request, 'Регистрация прошла успешно. Проверьте почту для подтверждения.')
+            return redirect('booking:login')
     else:
         form = RegistrationForm()
     return render(request, 'booking/register.html', {'form': form})
@@ -89,6 +101,9 @@ def user_login(request):
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            if not user.is_active:
+                messages.error(request, "Вы не подтвердили почту. Проверьте email для активации аккаунта.")
+                return redirect('booking:login')
             login(request, user)
             return redirect('booking:home')
     else:

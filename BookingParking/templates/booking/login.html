@@ -6,6 +6,13 @@
 <div class="auth-card">
 <a href="{% url 'booking:home' %}" class="back-arrow" title="На главную">←</a>
   <h2>Вход</h2>
+    {% if messages %}
+  <ul class="alert-list">
+    {% for message in messages %}
+      <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
@@ -15,4 +22,21 @@
     <p><a href="{% url 'booking:password_reset' %}">Забыли пароль?</a></p>
 
 </div>
+    <style>
+  .alert-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #000000;
+    font-weight: 500;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+  }
+</style>
 {% endblock %}

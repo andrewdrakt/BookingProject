@@ -51,4 +51,5 @@ urlpatterns = [
     path('profile/my-parking/<int:pk>/edit/', views.edit_parking_zone, name='edit_parking_zone'),
     path('profile/my-parking/<int:pk>/show/', views.show_parking_zone, name='show_parking_zone'),
     path('check-availability/<int:parking_id>/', views.check_availability, name='check_availability'),
+    path('servo/', views.servo_control, name='servo_control'),
 ]
