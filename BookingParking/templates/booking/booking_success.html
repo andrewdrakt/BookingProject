@@ -22,7 +22,7 @@
           <a href="{% url 'booking:leave_parking' booking.id %}" class="btn btn-danger">Выехать с парковки</a>
       {% endif %}
   {% else %}
-      <p class="text-muted">Ожидается действие...</p>
+      <p class="text-muted">Бронирование ещё не началось</p>
   {% endif %}
 
   <p class="mt-3">

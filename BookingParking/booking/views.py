@@ -309,7 +309,7 @@ def mark_overdue_bookings():
 @login_required
 def parking_detail(request, parking_id):
     if not request.user.car_number:
-        messages.error(request, "Чтобы бронировать парковку, добавьте номер автомобиля в настройках профиля.")
+        messages.warning(request,'Для бронирования укажите госномер. Перейдите в профиль → "Настройки" → введите номер автомобиля.')
         return redirect('booking:profile')
     parking = get_object_or_404(ParkingZone, id=parking_id)
     today = timezone.localdate()
@@ -350,14 +350,32 @@ def parking_detail(request, parking_id):
             end_dt = parse_datetime(end_date, end_time)
         except Exception as e:
             context['error'] = "Неверный формат даты/времени."
+            context.update({
+                'start_date': start_date,
+                'start_time': start_time,
+                'end_date': end_date,
+                'end_time': end_time,
+            })
             return render(request, 'booking/parking_detail.html', context)
 
         if start_dt < timezone.now():
             context['error'] = "Нельзя выбрать дату/время в прошлом."
+            context.update({
+                'start_date': start_date,
+                'start_time': start_time,
+                'end_date': end_date,
+                'end_time': end_time,
+            })
             return render(request, 'booking/parking_detail.html', context)
 
         if start_dt >= end_dt:
             context['error'] = "Дата начала должна быть раньше даты окончания."
+            context.update({
+                'start_date': start_date,
+                'start_time': start_time,
+                'end_date': end_date,
+                'end_time': end_time,
+            })
             return render(request, 'booking/parking_detail.html', context)
 
         overlapping_bookings = Booking.objects.filter(
@@ -368,6 +386,12 @@ def parking_detail(request, parking_id):
 
         if overlapping_bookings >= parking.total_places:
             context['error'] = "Нет свободных мест на указанный период."
+            context.update({
+                'start_date': start_date,
+                'start_time': start_time,
+                'end_date': end_date,
+                'end_time': end_time,
+            })
             return render(request, 'booking/parking_detail.html', context)
 
         user_overlap = Booking.objects.filter(
@@ -379,7 +403,13 @@ def parking_detail(request, parking_id):
         ).exists()
 
         if user_overlap:
-            context['error'] = "У вас уже есть бронь на это время в этой парковке."
+            context['error'] = "У вас уже есть бронь на это время на этой парковке."
+            context.update({
+                'start_date': start_date,
+                'start_time': start_time,
+                'end_date': end_date,
+                'end_time': end_time,
+            })
             return render(request, 'booking/parking_detail.html', context)
 
         new_booking = Booking.objects.create(
